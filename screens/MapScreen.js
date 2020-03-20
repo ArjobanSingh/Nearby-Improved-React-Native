@@ -1,11 +1,29 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import MapView, {Marker, PROVIDER_GOOGLE  } from 'react-native-maps';
+
+import {connect} from 'react-redux';
 
 
-const MapScreen = () => {
+const MapScreen = ({userLocation}) => {
     return (
         <View style={styles.container} >
-            <Text>MapScreen</Text>
+            <MapView 
+                provider={PROVIDER_GOOGLE}
+                style={styles.mapStyle} 
+                initialRegion={{
+                    latitude: userLocation.coords.latitude,
+                    longitude: userLocation.coords.longitude,
+                    latitudeDelta: 0.0082,
+                    longitudeDelta: 0.0081,
+                  }}>
+
+        <Marker
+            coordinate={userLocation.coords}
+            title="You are here"
+            description="nothinhg"
+            />
+                  </MapView>
         </View>
     )
 } 
@@ -18,6 +36,15 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
+    mapStyle: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+      },
   });
 
-  export default MapScreen;  
+  const mapStateToProps = (state) =>{
+    return {
+        userLocation: state.mapReducer
+    }
+}
+export default connect(mapStateToProps)(MapScreen);  

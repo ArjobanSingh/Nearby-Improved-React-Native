@@ -38,7 +38,8 @@ function MainApp(props) {
 }
 
 const mapStateToProps = (state) =>{
-    return {isLoggedIn: state.isLoggedIn}
+    console.log(state)
+    return {isLoggedIn: state.isLoginReducer.isLoggedIn}
 }
 
 export default connect(mapStateToProps)(MainApp)
