@@ -1,22 +1,70 @@
-import React, {Component, useState, useEffect} from 'react';
-import { StyleSheet, Text, View, TouchableHighlight, Dimensions, Platform, AppState, Button } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {  Platform,View, AppState, StyleSheet } from 'react-native';
+import NearbyScreen from './NearbyScreen'
+import SearchScreen from './SearchScreen'
 
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 
 import {connect} from 'react-redux';
-import {addLocation, removeLocation} from '../redux/actions'
+import {addLocation, removeLocation, searchData} from '../redux/actions'
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
-const { width } = Dimensions.get('window')
+const Tab = createMaterialTopTabNavigator();
 
 
-const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) => {
+function MyTabs(props) {
+  return (
+    <Tab.Navigator
+      lazy={true}>
+      <Tab.Screen name="Nearby">
+        {navigationProps => 
+            <NearbyScreen 
+                {...navigationProps}
+                someData={props.someData}
+                pressStatus={props.pressStatus}
+                text={props.text}
+                isMounted={props.isMounted}
+                setPressStatus={props.setPressStatus}
+                openMapScreen={props.openMapScreen} 
+            />
+        }
+      </Tab.Screen>
+      <Tab.Screen name="Search">
+        {navigationProps => 
+            <SearchScreen 
+                {...navigationProps}
+                someData={props.someData}
+                pressStatus={props.pressStatus}
+                text={props.text}
+                isMounted={props.isMounted}
+                setPressStatus={props.setPressStatus}
+                openMapScreen={props.openMapScreen} 
+            />
+        }
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
+
+
+const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navigation }) => {
     const [errorMessage, setErrorMessage] = useState(null) 
     const [appState, setAppState] = useState(AppState.currentState) 
     const [pressStatus, setPressStatus] = useState(false)
 
     let isMounted;
+
+    const search = async() => {
+      console.log(userLocation)
+      lat = userLocation.coords.latitude
+      long = userLocation.coords.longitude
+      radius = 3000
+      query = 'hospitals'
+      // console.log(lat, long)
+      const resp = await searchData(lat, long, radius, query)
+    }
 
 
     useEffect(() => {
@@ -27,7 +75,8 @@ const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) =>
               'Oops, this will not work on Sketch in an Android emulator. Try it on your device!',
             ): undefined}
           } else {
-            _getLocationAsync();
+            (async() => await _getLocationAsync())()
+            
           }
         console.log("didmount")  
 
@@ -39,13 +88,13 @@ const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) =>
         })
     }, [])
 
-    const handleAppStateChange = (nextAppState) => {
+    const handleAppStateChange = async(nextAppState) => {
         if (
             appState.match(/inactive|background/) &&
             nextAppState === 'active'
           ) {
             console.log('App has come to the foreground!');
-            getLocationAsync();
+            await getLocationAsync();
           }
           {isMounted ? setAppState(nextAppState) : undefined};
         }
@@ -53,27 +102,17 @@ const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) =>
     const _getLocationAsync = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         if (status !== 'granted') {
-          {isMounted ?setErrorMessage(
+          setErrorMessage(
             'Permission to access location was denied',
-          ): undefined}
+          )
           return
         }
     
         let thisLocation = await Location.getCurrentPositionAsync({});
-        {isMounted? addLocation(thisLocation) : undefined}
+        addLocation(thisLocation)
+        // await search();
       };
 
-    const onHideUnderlay = () => {
-        if (isMounted) setPressStatus(false)
-    }
-
-    const onShowUnderlay = () => {
-        if (isMounted) setPressStatus(true)
-    }
-
-    const openMapScreen = () =>{
-        navigation .navigate('Map')
-    }
 
     const someData = async() => {
         if (await Location.hasServicesEnabledAsync()){
@@ -85,6 +124,10 @@ const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) =>
         }
     }
 
+    const openMapScreen = () =>{
+      navigation.navigate('Map')
+    }
+
     let text = 'Waiting..';
     if (errorMessage) {
       text = errorMessage;
@@ -93,62 +136,32 @@ const HomeScreen = ({navigation, addLocation, removeLocation, userLocation }) =>
     }
 
     return (
-        <View style={styles.container} >
-            <TouchableHighlight 
-            style={!pressStatus ? styles.mapButton : styles.pressButton} 
-            onPress={openMapScreen}
-            onHideUnderlay={onHideUnderlay}
-            onShowUnderlay={onShowUnderlay}
-            >
-                <Text style={{fontSize: 20, fontWeight: 'bold', color:'white'}}>Go To MapScreen</Text>
-            </TouchableHighlight>
-               <Text style={styles.paragraph}>{text}</Text>
-            <Button title="Press to check" onPress={someData} />
-        </View>
+      <View style={styles.container}>
+        <MyTabs 
+        someData={someData}
+        pressStatus={pressStatus}
+        text={text}
+        isMounted={isMounted}
+        setPressStatus={setPressStatus}
+        openMapScreen={openMapScreen}
+      />
+      </View>
     )
 } 
 
 
 const styles = StyleSheet.create({
-    paragraph: {
-        margin: 24,
-        fontSize: 18,
-        textAlign: 'center',
-      },
-      container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-      },
-      mapButton : {
-          height: "5%",
-          width: width - 20,
-          backgroundColor: 'blue',
-          justifyContent: 'center',
-          alignItems: 'center',
-          alignSelf: 'center',
-          marginVertical: '2%',
-          borderRadius: 50,
-          paddingTop: 10,
-          elevation: 7,
-      },
-      pressButton:{
-          height: "5%",
-          width: width - 50,
-          backgroundColor: 'black',
-          justifyContent: 'center',
-          alignItems: 'center',
-          alignSelf: 'center',
-          marginVertical: '2%',
-          borderRadius: 50,
-          paddingTop: 10,
-          elevation: 10,
-      }
-  });
+  container:{
+    flex: 1,
+    marginTop: Constants.statusBarHeight,
+  }
+})
+
+
 
   const mapStateToProps = (state) =>{
       return {
           userLocation: state.mapReducer
       }
   }
-  export default connect(mapStateToProps, {removeLocation, addLocation})(HomeScreen);  
+  export default connect(mapStateToProps, {removeLocation, addLocation, searchData})(HomeScreen);  

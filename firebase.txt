@@ -40,3 +40,8 @@ CLIENT ID ANDROID
 CLIENT IOS ID
 
 309181979930-kcag7903p8v16vocqk69e8u8b5dsdhui.apps.googleusercontent.com
+
+
+GOOGLE API key
+
+AIzaSyBmvyu0p-oHFiGboJDEJLh4DqBH13UsrjY
