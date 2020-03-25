@@ -12,16 +12,16 @@ import { combineReducers } from 'redux'
 //     }
 // }
 
-const rawData = (state=[], action) => {
-    switch(action.type){
-        case SET_RAW_DATA:
-            return action.payload.results
-        case DELETE_RAW_DATA:
-            return []
-        default:
-            return state        
-    }
-}
+// const rawData = (state=[], action) => {
+//     switch(action.type){
+//         case SET_RAW_DATA:
+//             return action.payload.results
+//         case DELETE_RAW_DATA:
+//             return []
+//         default:
+//             return state        
+//     }
+// }
 
 const searchData = (state={loadingData : false, data :null, dataError : null}, action) => {
     switch(action.type){
@@ -68,7 +68,6 @@ export default combineReducers({
     isLoginReducer,
     mapReducer,
     searchData,
-    rawData
   })
 
 

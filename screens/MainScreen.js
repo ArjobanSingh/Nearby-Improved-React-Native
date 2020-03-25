@@ -13,42 +13,6 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 
 const Tab = createMaterialTopTabNavigator();
 
-
-function MyTabs(props) {
-  return (
-    <Tab.Navigator
-      lazy={true}>
-      <Tab.Screen name="Nearby">
-        {navigationProps => 
-            <NearbyScreen 
-                {...navigationProps}
-                someData={props.someData}
-                pressStatus={props.pressStatus}
-                text={props.text}
-                isMounted={props.isMounted}
-                setPressStatus={props.setPressStatus}
-                openMapScreen={props.openMapScreen} 
-            />
-        }
-      </Tab.Screen>
-      <Tab.Screen name="Search">
-        {navigationProps => 
-            <SearchScreen 
-                {...navigationProps}
-                someData={props.someData}
-                pressStatus={props.pressStatus}
-                text={props.text}
-                isMounted={props.isMounted}
-                setPressStatus={props.setPressStatus}
-                openMapScreen={props.openMapScreen} 
-            />
-        }
-      </Tab.Screen>
-    </Tab.Navigator>
-  );
-}
-
-
 const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navigation }) => {
     const [errorMessage, setErrorMessage] = useState(null) 
     const [appState, setAppState] = useState(AppState.currentState) 
@@ -68,6 +32,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
 
 
     useEffect(() => {
+      console.log("STARTED MOUNTING")
         isMounted = true;
         AppState.addEventListener('change', handleAppStateChange)
         if (Platform.OS === 'android' && !Constants.isDevice) {
@@ -136,6 +101,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
     }
 
     return (
+
       <View style={styles.container}>
         <MyTabs 
         someData={someData}
@@ -146,6 +112,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
         openMapScreen={openMapScreen}
       />
       </View>
+
     )
 } 
 
@@ -156,6 +123,41 @@ const styles = StyleSheet.create({
     marginTop: Constants.statusBarHeight,
   }
 })
+
+
+function MyTabs(props) {
+  return (
+    <Tab.Navigator
+      lazy={true}>
+      <Tab.Screen name="Nearby">
+        {navigationProps => 
+            <NearbyScreen 
+                {...navigationProps}
+                someData={props.someData}
+                pressStatus={props.pressStatus}
+                text={props.text}
+                isMounted={props.isMounted}
+                setPressStatus={props.setPressStatus}
+                openMapScreen={props.openMapScreen} 
+            />
+        }
+      </Tab.Screen>
+      <Tab.Screen name="Search">
+        {navigationProps => 
+            <SearchScreen 
+                {...navigationProps}
+                someData={props.someData}
+                pressStatus={props.pressStatus}
+                text={props.text}
+                isMounted={props.isMounted}
+                setPressStatus={props.setPressStatus}
+                openMapScreen={props.openMapScreen} 
+            />
+        }
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
 
 
 

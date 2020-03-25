@@ -12,8 +12,8 @@ const SEARCH_ERROR = "SEARCH_ERROR"
 const LOADING_DATA = "LOADING_DATA"
 const CANCEL_LOADING_DATA = "CANCEL_LOADING_DATA"
 const SET_SEARCH_DATA = "SET_SEARCH_DATA"
-export const SET_RAW_DATA = "SET_RAW_DATA"
-export const DELETE_RAW_DATA = "DELETE_RAW_DATA"
+// export const SET_RAW_DATA = "SET_RAW_DATA"
+// export const DELETE_RAW_DATA = "DELETE_RAW_DATA"
 // export const DATA_PROVIDER = "DATA_PROVIDER"
 
 
@@ -33,21 +33,21 @@ export const DELETE_RAW_DATA = "DELETE_RAW_DATA"
 //     }
 // }
 
-export const setRawData = () =>{
+// export const setRawData = () =>{
 
-    return {
-        type: SET_RAW_DATA,
-        payload:{
-            results
-        }
-    }
-}
+//     return {
+//         type: SET_RAW_DATA,
+//         payload:{
+//             results
+//         }
+//     }
+// }
 
-export const delRawData = () => {
-    return {
-        type: DELETE_RAW_DATA
-    }
-}
+// export const delRawData = () => {
+//     return {
+//         type: DELETE_RAW_DATA
+//     }
+// }
 
 const searchData = (lat, long, radius, query) => {
     return (async(dispatch) => {
