@@ -1,5 +1,5 @@
 // const API_KEY = ``;
-const CONF_API_KEY = 'CONFIDENTIAL API KEY'
+const CONF_API_KEY = 'API'
 
 
 // export const searchPlaces = async(lat, long, radius, query) => {
@@ -25,4 +25,4 @@ export const searchGooglePlaces = async(lat, long, radius, query) => {
             return {msg:e.message, customError: true}
         }
     }
-            
+

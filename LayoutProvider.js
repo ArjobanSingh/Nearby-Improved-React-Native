@@ -14,7 +14,7 @@ export default class LayoutProvider extends GridLayoutProvider {
                 }
             },
             (index) => {
-                return 400;
+                return 450;
             },
             
         );

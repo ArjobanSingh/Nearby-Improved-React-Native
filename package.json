@@ -34,7 +34,8 @@
     "recyclerlistview-gridlayoutprovider": "^1.0.1",
     "redux": "^4.0.5",
     "redux-persist": "^6.0.0",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "spherical-geometry-js": "^2.0.0"
   },
   "devDependencies": {
     "babel-preset-expo": "~8.0.0",
