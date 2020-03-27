@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {  Platform,View, AppState, StyleSheet } from 'react-native';
+import {  Platform,View, AppState, StyleSheet, Text } from 'react-native';
 import NearbyScreen from './NearbyScreen'
 import SearchScreen from './SearchScreen'
 
@@ -49,7 +49,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
         return (() => {
             isMounted = false;
             AppState.removeEventListener('change', handleAppStateChange)
-            removeLocation()
+            //removeLocation()
         })
     }, [])
 
@@ -103,6 +103,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
     return (
 
       <View style={styles.container}>
+        {userLocation?
         <MyTabs 
         someData={someData}
         pressStatus={pressStatus}
@@ -110,7 +111,8 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
         isMounted={isMounted}
         setPressStatus={setPressStatus}
         openMapScreen={openMapScreen}
-      />
+      /> 
+      : <Text>Loading...</Text>}
       </View>
 
     )
@@ -127,21 +129,23 @@ const styles = StyleSheet.create({
 
 function MyTabs(props) {
   return (
+
     <Tab.Navigator
-      lazy={true}>
-      <Tab.Screen name="Nearby">
-        {navigationProps => 
+      lazy={true}
+      swipeEnabled={false}>
+      <Tab.Screen name="Nearby" component={NearbyScreen} />
+        {/* {navigationProps => 
             <NearbyScreen 
                 {...navigationProps}
-                someData={props.someData}
-                pressStatus={props.pressStatus}
-                text={props.text}
-                isMounted={props.isMounted}
-                setPressStatus={props.setPressStatus}
-                openMapScreen={props.openMapScreen} 
+                // someData={props.someData}
+                // pressStatus={props.pressStatus}
+                // text={props.text}
+                // isMounted={props.isMounted}
+                // setPressStatus={props.setPressStatus}
+                // openMapScreen={props.openMapScreen} 
             />
-        }
-      </Tab.Screen>
+        } */}
+      {/* </Tab.Screen> */}
       <Tab.Screen name="Search">
         {navigationProps => 
             <SearchScreen 

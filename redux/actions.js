@@ -12,9 +12,12 @@ const SEARCH_ERROR = "SEARCH_ERROR"
 const LOADING_DATA = "LOADING_DATA"
 const CANCEL_LOADING_DATA = "CANCEL_LOADING_DATA"
 const SET_SEARCH_DATA = "SET_SEARCH_DATA"
-// export const SET_RAW_DATA = "SET_RAW_DATA"
+// export const SET_HOSPITALS_RAW_DATA = "SET_HOSPITALS_RAW_DATA"
+// export const SET_ATTRACTIONS_RAW_DATA = "SET_ATTRACTIONS_RAW_DATA"
+// export const SET_HOTELS_RAW_DATA = "SET_HOTELS_RAW_DATA"
+// export const SET_PLACES_RAW_DATA = "SET_PLACES_RAW_DATA"
 // export const DELETE_RAW_DATA = "DELETE_RAW_DATA"
-// export const DATA_PROVIDER = "DATA_PROVIDER"
+// // export const DATA_PROVIDER = "DATA_PROVIDER"
 
 
 // const makeGoodData = () => {
@@ -33,12 +36,45 @@ const SET_SEARCH_DATA = "SET_SEARCH_DATA"
 //     }
 // }
 
-// export const setRawData = () =>{
+// export const setHospitalsRawData = (hospitals_raw_data) =>{
 
 //     return {
-//         type: SET_RAW_DATA,
+//         type: SET_HOSPITALS_RAW_DATA,
 //         payload:{
-//             results
+//             hospitals_raw_data
+//         }
+//     }
+// }
+
+
+// export const setAttractionsRawData = (attractions_raw_data) =>{
+
+//     return {
+//         type: SET_ATTRACTIONS_RAW_DATA,
+//         payload:{
+//             attractions_raw_data
+//         }
+//     }
+// }
+
+
+// export const setHotelsRawData = (hotels_raw_data) =>{
+
+//     return {
+//         type: SET_HOTELS_RAW_DATA,
+//         payload:{
+//             hotels_raw_data
+//         }
+//     }
+// }
+
+
+// export const setPlacesRawData = (places_raw_data) =>{
+
+//     return {
+//         type: SET_PLACES_RAW_DATA,
+//         payload:{
+//             places_raw_data
 //         }
 //     }
 // }

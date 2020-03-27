@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react'
-import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight, Image  } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight,TouchableOpacity, ActivityIndicator,Image  } from 'react-native';
 import { RecyclerListView, DataProvider } from "recyclerlistview";
 import LayoutProvider from '../LayoutProvider';
 import * as Font from 'expo-font';
@@ -14,129 +14,175 @@ import {results} from '../RawData'
 
 const { width } = Dimensions.get('window')
 
-// class NearbyScreen extends React.Component {
 
-//     constructor(props){
-//         super(props);
-
-
-
-        
-
-//         this.dataProvider = new DataProvider((r1, r2) => {
-//             return r1 !== r2;
-//         });
-
-//         this.layoutProvider = new LayoutProvider(
-//             () => {
-//                 // console.log(this.state.dataProvider.getDataForIndex(i).name)
-//                 return "NORMAL"
-//             }, (type, dim) => {
-//                 switch (type){
-//                     case "NORMAL":
-//                         dim.width = width;
-//                         dim.height = 160;
-//                         break;
-//                     default:
-//                         dim.width = 0;
-//                         dim.height = 0;    
-//                 }
-//             }
-//         );
-
-//         // let check = this.props.setRawData()
-//         // this.props.provideData(dataProvider.cloneWithRows(this.props.rawData))
-//         // console.log("CONSTRUCTOR", check.payload.results)
-
-//         this.state = {
-//             data : this.dataProvider.cloneWithRows([])
-//         }
-
-//     }
-
-//     // setAndGet = () => {
-//     //     myVar = setTimeout(() => results, 3000);
-//     //     return myVar
-//     // }
-
-//     componentDidMount(){
-//         console.log("MOUNTED IN NEARBY")
-//         this.props.setRawData()
-//         this.setState({data: this.dataProvider.cloneWithRows(this.props.rawData)})
-//         console.log("IS IT REACHING HERE")
-//     }
-
-//     rowRenderer = (type, data) => {
-
-//         const {name, rating, vicinity} = data
-//         switch(type){
-//             case "NORMAL":
-//                 return(
-//                     <View style={styles.cellContainer}>
-//                         <Text>{name}</Text>
-//                         <Text>{rating}</Text>
-//                         <Text>{vicinity}</Text>
-//                     </View>
-//                 )
-//                 break
-//             case "LOADING"    :
-//                 return (
-//                     <Text>LOADING...</Text>
-//                 )
-//             default:
-//                 return null;    
-//         }
-//     }
-
-//     render(){
-//         return (
-//             <View style={styles.container} >
-//                 <Button title="CHECK" onPress={() => console.log(dataProv)} />
-//                 <RecyclerListView 
-//                     layoutProvider={this.layoutProvider}
-//                     dataProvider={this.state.data}
-//                     rowRenderer={this.rowRenderer}
-//                     renderFooter={!this.state.data ? () => <Text>no data</Text> : () => null}
-//                 />
-//             </View>
-//         )
-//     }
-
-// }
 
 const makeGoodData = () => {
+
+
+
     let realResults = results.map((item) => {
         return {name: item.name, type: "ITEM_SPAN_2", id: item.id, vicinity: item.vicinity, rating: item.rating, icon: item.icon, geometry: item.geometry}
     })
     return realResults
 }
 
+
+
 const NearbyScreen = ({currentLoc}) => {
+
+    const [selected, setSelected ] = useState("HOSPITALS")
+
 
     let dataProvider = new DataProvider((r1, r2) => {
         return r1 !== r2;
     });;
 
+
+
+    const [dataProv, setDataProv] = useState(dataProvider.cloneWithRows([]))
+    const [hospitalsData, setHospitalsData] = useState(null)
+    const [hotelsData, setHotelsData] = useState(null)
+    const [attractionsData, setAttractionsData] = useState(null)
+    const [placesData, setPlacesData] = useState(null)
+    const [loadingData, isLoadingData] = useState(true)
+    const [error, setError] = useState("")
+    const [noResults, setNoResults] =useState(false)
+
+
+
     useEffect(() => {
-        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-        // return (() => delRawData())
+        // Did this for caching
+        switch(selected){
+            case "HOSPITALS":
+                if (hospitalsData !== null && hospitalsData.length > 0){
+
+                    setDataProv(dataProvider.cloneWithRows(hospitalsData))
+                    isLoadingData(false)
+                } else{
+                    // fetch data from api
+                    setTimeout(() => {
+                        isLoadingData(true)
+                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+                        setHospitalsData(dataProv._data)
+                        isLoadingData(false)
+                    }, 2000)
+                    setTimeout(() => {}, 2000)
+
+                }
+                break
+            case "ATTRACTIONS":
+                if (attractionsData !== null && hospitalsData.length > 0 ){
+                    setDataProv(dataProvider.cloneWithRows(attractionsData))
+                    isLoadingData(false)
+                } else{
+                    // fetch data from api
+                    setTimeout(() => {
+                        isLoadingData(true)
+                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+                        setAttractionsData(dataProv._data)
+                        isLoadingData(false)
+                    }, 2000)
+                    setTimeout(() => {}, 2000)
+
+                }
+                break
+            case "HOTELS":
+                if (hotelsData !== null && hospitalsData.length > 0 ){
+                    setDataProv(dataProvider.cloneWithRows(hotelsData))
+                    isLoadingData(false)
+                } else{
+                    // fetch data from api
+                    setTimeout(() => {
+                        isLoadingData(true)
+                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+                        setHotelsData(dataProv._data)
+                        isLoadingData(false)
+                    }, 2000)
+                    setTimeout(() => {}, 2000)
+
+                }
+                break
+            case "PLACES":
+                if (placesData !== null && hospitalsData.length > 0 ){
+                    setDataProv(dataProvider.cloneWithRows(placesData))
+                    isLoadingData(false)
+                } else{
+                    // fetch data from api
+                    setTimeout(() => {
+                        isLoadingData(true)
+                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+                        setPlacesData(dataProv._data)
+                        isLoadingData(false)
+                    }, 2000)
+                    setTimeout(() => {}, 2000)
+ 
+                }
+                break   
+            default:
+                break                                 
+        }
+
+    }, [selected,])
+
+    const selectHospitals = () => {
+        if (selected !== "HOSPITALS"){
+            setSelected("HOSPITALS")
+            
+        }
+        return
+    }
+    const selectAttractions = () => {
+        if (selected !== "ATTRACTIONS"){
+            setSelected("ATTRACTIONS")
+
+        }
+        return
+    }
+    const selectHotels = () => {
+        if (selected !== "HOTELS"){
+            setSelected("HOTELS")
+
+        }
+        return
+    }
+    const selectPlaces = () => {
+        if (selected !== "PLACES"){
+            setSelected("PLACES")
+
+        }
+        return
+    }
+
+
+
+    useEffect(() => {
+
+        // setHospitalsRawData(dataProv)
+        setTimeout(() =>{
+            setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+            setHospitalsData(dataProv._data)
+            isLoadingData(false)
+        }, 2000)
+
+
+
     }, [])
 
+    let layoutProvider = new LayoutProvider(dataProv)
+
     const distanceBetween = (lat, long) => {
-        console.log("LATLONG", typeof lat,typeof long)
         let finalDis = computeDistanceBetween({lat: currentLoc.coords.latitude, lng: currentLoc.coords.longitude}, {lat, long})
         return Math.round(finalDis)
     }
 
-    const [dataProv, setDataProv] = useState(dataProvider.cloneWithRows([]))
+ 
 
-    let layoutProvider = new LayoutProvider(dataProv)
+
 
     let rowRenderer = (type, data) => {
 
 
         let {name, rating, vicinity, icon, geometry} = data
-        console.log(geometry)
         let helper;
         if (rating){
             helper =  parseFloat((5.0 - rating).toString().slice(0,5));
@@ -179,31 +225,35 @@ const NearbyScreen = ({currentLoc}) => {
         }
     }
 
-    // const onHideUnderlay = () => {
-    //     if (isMounted) setPressStatus(false)
-    // }
-
-    // const onShowUnderlay = () => {
-    //     if (isMounted) setPressStatus(true)
-    // }
-
 
 
   return (
     <View style={styles.container} >
         <ScrollView horizontal={true}>
-            <Text style={[styles.options, styles.hospitals]}>Hospitals</Text>
-            <Text style={[styles.options, styles.hotels]}>Attractions</Text>
-            <Text style={[styles.options, styles.attractions]}>Hotels</Text>
-            <Text style={[styles.options, styles.places]}>Places</Text>
+            <TouchableOpacity style={{flex: 1}} onPress={selectHospitals}>
+            <Text style={[styles.options, selected === "HOSPITALS"? styles.selectedOption: styles.default] }>Hospitals</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{flex: 1}} onPress={selectAttractions}>
+            <Text style={[styles.options, selected === "ATTRACTIONS"? styles.selectedOption: styles.default] }>Attractions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{flex: 1}} onPress={selectHotels}>
+            <Text style={[styles.options, selected === "HOTELS"? styles.selectedOption: styles.default] }>Hotels</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{flex: 1}} onPress={selectPlaces}>
+            <Text style={[styles.options, selected === "PLACES"? styles.selectedOption: styles.default] }>Places</Text>
+            </TouchableOpacity>
         </ScrollView>
+            {loadingData ?
+            <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+            :error !== ""? 
+            <Text>{error}</Text>
+            :noResults? <Text>No results</Text>:
             <RecyclerListView 
-            style={{backgroundColor: 'black'}}
                 layoutProvider={layoutProvider}
                 dataProvider={dataProv}
                 rowRenderer={rowRenderer}
-                renderFooter={!dataProv ? () => <Text>LOADING</Text> : () => null}
-            />
+            /> 
+            }
 
     </View>
   )
@@ -299,19 +349,15 @@ const styles = StyleSheet.create({
           padding: 10,
           borderRadius: 50,
           marginBottom: 20, 
-          elevation: 10
       },
-      hospitals:{
-        backgroundColor: '#fc4445',
+      selectedOption:{
+        backgroundColor: 'black',
+        color: 'white',
       },
-      hotels:{
-        backgroundColor: '#66fcf1',
-      },
-      attractions:{
-        backgroundColor: '#fc4c72',
-      },
-      places:{
-        backgroundColor: '#8860d0',
+      default:{
+        backgroundColor: '#fff',
+        color: 'black',
+        elevation: 5
       }
   });
 
