@@ -21,21 +21,22 @@ const makeGoodData = () => {
 
 
     let realResults = results.map((item) => {
-        return {name: item.name, type: "ITEM_SPAN_2", id: item.id, vicinity: item.vicinity, rating: item.rating, icon: item.icon, geometry: item.geometry}
+        return {name: item.name, type: "ITEM_SPAN_2", id: item.id, vicinity: item.vicinity, 
+        rating: item.rating, icon: item.icon, geometry: item.geometry, photos: item.photos}
     })
     return realResults
 }
 
 
 
-const NearbyScreen = ({currentLoc}) => {
+const NearbyScreen = ({currentLoc, navigation}) => {
 
     const [selected, setSelected ] = useState("HOSPITALS")
 
 
     let dataProvider = new DataProvider((r1, r2) => {
         return r1 !== r2;
-    });;
+    });
 
 
 
@@ -48,41 +49,38 @@ const NearbyScreen = ({currentLoc}) => {
     const [error, setError] = useState("")
     const [noResults, setNoResults] =useState(false)
 
-
+    const goToMap = (geometry, name, vicinity,photos) => {
+        navigation.navigate('Map', {
+            destinationGeometry: geometry,
+            destinationName: name,
+            destinationVicinity: vicinity,
+            destinationPhotos: photos
+        })
+    }
 
     useEffect(() => {
         // Did this for caching
         switch(selected){
             case "HOSPITALS":
                 if (hospitalsData !== null && hospitalsData.length > 0){
-
                     setDataProv(dataProvider.cloneWithRows(hospitalsData))
                     isLoadingData(false)
-                } else{
-                    // fetch data from api
-                    setTimeout(() => {
-                        isLoadingData(true)
-                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-                        setHospitalsData(dataProv._data)
-                        isLoadingData(false)
-                    }, 2000)
-                    setTimeout(() => {}, 2000)
-
                 }
-                break
+
+                break;
             case "ATTRACTIONS":
                 if (attractionsData !== null && hospitalsData.length > 0 ){
                     setDataProv(dataProvider.cloneWithRows(attractionsData))
                     isLoadingData(false)
                 } else{
                     // fetch data from api
+                    isLoadingData(true)
                     setTimeout(() => {
-                        isLoadingData(true)
+
                         setDataProv(dataProvider.cloneWithRows(makeGoodData()))
                         setAttractionsData(dataProv._data)
                         isLoadingData(false)
                     }, 2000)
-                    setTimeout(() => {}, 2000)
 
                 }
                 break
@@ -92,13 +90,15 @@ const NearbyScreen = ({currentLoc}) => {
                     isLoadingData(false)
                 } else{
                     // fetch data from api
+                    isLoadingData(true)
                     setTimeout(() => {
-                        isLoadingData(true)
+
                         setDataProv(dataProvider.cloneWithRows(makeGoodData()))
                         setHotelsData(dataProv._data)
                         isLoadingData(false)
                     }, 2000)
-                    setTimeout(() => {}, 2000)
+
+
 
                 }
                 break
@@ -108,13 +108,15 @@ const NearbyScreen = ({currentLoc}) => {
                     isLoadingData(false)
                 } else{
                     // fetch data from api
+                    isLoadingData(true)
                     setTimeout(() => {
-                        isLoadingData(true)
+                        
                         setDataProv(dataProvider.cloneWithRows(makeGoodData()))
                         setPlacesData(dataProv._data)
                         isLoadingData(false)
                     }, 2000)
-                    setTimeout(() => {}, 2000)
+
+
  
                 }
                 break   
@@ -123,6 +125,7 @@ const NearbyScreen = ({currentLoc}) => {
         }
 
     }, [selected,])
+
 
     const selectHospitals = () => {
         if (selected !== "HOSPITALS"){
@@ -158,11 +161,11 @@ const NearbyScreen = ({currentLoc}) => {
     useEffect(() => {
 
         // setHospitalsRawData(dataProv)
-        setTimeout(() =>{
+        // setTimeout(() =>{
             setDataProv(dataProvider.cloneWithRows(makeGoodData()))
             setHospitalsData(dataProv._data)
             isLoadingData(false)
-        }, 2000)
+        // }, 2000)
 
 
 
@@ -182,7 +185,7 @@ const NearbyScreen = ({currentLoc}) => {
     let rowRenderer = (type, data) => {
 
 
-        let {name, rating, vicinity, icon, geometry} = data
+        let {name, rating, vicinity, icon, geometry, photos} = data
         let helper;
         if (rating){
             helper =  parseFloat((5.0 - rating).toString().slice(0,5));
@@ -196,7 +199,7 @@ const NearbyScreen = ({currentLoc}) => {
             case "ITEM_SPAN_2":
                 return(
 
-                    <TouchableHighlight style={styles.doubleSpanStyle} onPress={() => console.log("")}>
+                    <TouchableHighlight style={styles.doubleSpanStyle} onPress={() => goToMap(geometry, name, vicinity,photos)}>
                         <View style={{flex: 1}}>
                             <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
                             <Image
@@ -229,7 +232,7 @@ const NearbyScreen = ({currentLoc}) => {
 
   return (
     <View style={styles.container} >
-        <ScrollView horizontal={true}>
+        <ScrollView style={{flex: 1}} horizontal={true}>
             <TouchableOpacity style={{flex: 1}} onPress={selectHospitals}>
             <Text style={[styles.options, selected === "HOSPITALS"? styles.selectedOption: styles.default] }>Hospitals</Text>
             </TouchableOpacity>
@@ -243,17 +246,27 @@ const NearbyScreen = ({currentLoc}) => {
             <Text style={[styles.options, selected === "PLACES"? styles.selectedOption: styles.default] }>Places</Text>
             </TouchableOpacity>
         </ScrollView>
-            {loadingData ?
-            <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
-            :error !== ""? 
-            <Text>{error}</Text>
-            :noResults? <Text>No results</Text>:
+            <View style={{flex:7}}>
             <RecyclerListView 
                 layoutProvider={layoutProvider}
                 dataProvider={dataProv}
                 rowRenderer={rowRenderer}
             /> 
+            {loadingData ?
+            <View style={styles.overlap}>
+            <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+            </View>
+            :error !== ""? 
+            <View style={styles.overlap}>
+                <Text>{error}</Text>
+            </View>
+            :noResults? 
+            <View style={styles.overlap}>
+                <Text>No results</Text>
+            </View>
+            :<View />
             }
+            </View>
 
     </View>
   )
@@ -358,7 +371,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         color: 'black',
         elevation: 5
-      }
+      },
+      overlap:
+      {position:'absolute', 
+      height:'100%',
+      width:width, 
+      flex: 1, 
+      backgroundColor: 'white'},
   });
 
 
