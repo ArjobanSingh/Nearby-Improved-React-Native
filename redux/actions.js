@@ -12,6 +12,9 @@ const SEARCH_ERROR = "SEARCH_ERROR"
 const LOADING_DATA = "LOADING_DATA"
 const CANCEL_LOADING_DATA = "CANCEL_LOADING_DATA"
 const SET_SEARCH_DATA = "SET_SEARCH_DATA"
+const LOCATION_ERROR ="LOCATION_ERROR"
+const NO_LOCATION_ERROR = "NO_LOCATION_ERROR"
+
 // export const SET_HOSPITALS_RAW_DATA = "SET_HOSPITALS_RAW_DATA"
 // export const SET_ATTRACTIONS_RAW_DATA = "SET_ATTRACTIONS_RAW_DATA"
 // export const SET_HOTELS_RAW_DATA = "SET_HOTELS_RAW_DATA"
@@ -85,13 +88,29 @@ const SET_SEARCH_DATA = "SET_SEARCH_DATA"
 //     }
 // }
 
+const noLocationError = () => {
+    return {
+        type: NO_LOCATION_ERROR
+    }
+}
+
+const locationError = (err) => {
+    return {
+        type: LOCATION_ERROR,
+        payload : {
+            locationErr: err
+        }
+    }
+}
+
 const searchData = (lat, long, radius, query) => {
     return (async(dispatch) => {
         dispatch(loadingData())
 
         const jsonResponse = await searchGooglePlaces(lat, long, radius, query)
-        console.log("GOOGLE JSON",jsonResponse)
+        
         if (!jsonResponse.customError){
+            console.log("GOOGLE JSON", jsonResponse)
             dispatch(setSearchData(jsonResponse))
             dispatch(cancelLoadingData())
             return
@@ -183,5 +202,6 @@ const loginError = (err) => {
     }
 }
 
-export { LOGIN, LOGOUT, LOADING,LOGIN_ERROR, ADD_LOCATION, REMOVE_LOCATION ,SEARCH_ERROR, LOADING_DATA,CANCEL_LOADING_DATA, SET_SEARCH_DATA,
-    handleLogin,loading, logout, removeLocation, addLocation, searchData}
+export { LOGIN, LOGOUT, LOADING,LOGIN_ERROR, ADD_LOCATION, REMOVE_LOCATION ,SEARCH_ERROR, 
+    LOADING_DATA,CANCEL_LOADING_DATA, SET_SEARCH_DATA, LOCATION_ERROR, NO_LOCATION_ERROR, 
+    handleLogin,loading, logout, removeLocation,addLocation, searchData, locationError, noLocationError}

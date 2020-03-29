@@ -8,27 +8,20 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 
 import {connect} from 'react-redux';
-import {addLocation, removeLocation, searchData} from '../redux/actions'
+import {addLocation, removeLocation,  locationError, noLocationError} from '../redux/actions'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 const Tab = createMaterialTopTabNavigator();
 
-const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navigation }) => {
+let isMounted;
+const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, locationError, noLocationError, locationErr }) => {
     const [errorMessage, setErrorMessage] = useState(null) 
     const [appState, setAppState] = useState(AppState.currentState) 
     const [pressStatus, setPressStatus] = useState(false)
+    const [loading, setLoading] = useState(true)
 
-    let isMounted;
 
-    const search = async() => {
-      console.log(userLocation)
-      lat = userLocation.coords.latitude
-      long = userLocation.coords.longitude
-      radius = 3000
-      query = 'hospitals'
-      // console.log(lat, long)
-      const resp = await searchData(lat, long, radius, query)
-    }
+
 
 
     useEffect(() => {
@@ -43,13 +36,12 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
             (async() => await _getLocationAsync())()
             
           }
-        console.log("didmount")  
 
 
         return (() => {
             isMounted = false;
             AppState.removeEventListener('change', handleAppStateChange)
-            //removeLocation()
+            removeLocation()
         })
     }, [])
 
@@ -67,15 +59,18 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
     const _getLocationAsync = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
         if (status !== 'granted') {
-          setErrorMessage(
-            'Permission to access location was denied',
-          )
+          locationError('Permission to access location was denied')
+          setLoading(false)
+          // setErrorMessage(
+          //   'Permission to access location was denied',
+          // )
           return
         }
-    
+        
         let thisLocation = await Location.getCurrentPositionAsync({});
         addLocation(thisLocation)
-        // await search();
+        noLocationError()
+        setLoading(false)
       };
 
 
@@ -103,7 +98,12 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
     return (
 
       <View style={styles.container}>
-        {userLocation?
+        {loading? <Text>Loading...</Text> :
+        locationErr.error ?
+        <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+          <Text>We need your location for app. Give location permission!</Text> 
+        </View>
+        :
         <MyTabs 
         someData={someData}
         pressStatus={pressStatus}
@@ -111,8 +111,24 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, searchData, navi
         isMounted={isMounted}
         setPressStatus={setPressStatus}
         openMapScreen={openMapScreen}
+        _getLocationAsync={_getLocationAsync}
       /> 
-      : <Text>Loading...</Text>}
+        }
+        {/* {locationErr.error === false?
+        <MyTabs 
+        someData={someData}
+        pressStatus={pressStatus}
+        text={text}
+        isMounted={isMounted}
+        setPressStatus={setPressStatus}
+        openMapScreen={openMapScreen}
+        _getLocationAsync={_getLocationAsync}
+      /> 
+      :locationErr.error === false? <Text>Loading...</Text> :
+      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+      <Text>We need your location for app. Give location permission!</Text> 
+      </View>
+      } */}
       </View>
 
     )
@@ -133,19 +149,14 @@ function MyTabs(props) {
     <Tab.Navigator
       lazy={true}
       swipeEnabled={false}>
-      <Tab.Screen name="Nearby" component={NearbyScreen} />
-        {/* {navigationProps => 
+      <Tab.Screen name="Nearby">
+        {navigationProps => 
             <NearbyScreen 
                 {...navigationProps}
-                // someData={props.someData}
-                // pressStatus={props.pressStatus}
-                // text={props.text}
-                // isMounted={props.isMounted}
-                // setPressStatus={props.setPressStatus}
-                // openMapScreen={props.openMapScreen} 
+                getLocation={props._getLocationAsync}
             />
-        } */}
-      {/* </Tab.Screen> */}
+        } 
+      </Tab.Screen>
       <Tab.Screen name="Search">
         {navigationProps => 
             <SearchScreen 
@@ -167,7 +178,8 @@ function MyTabs(props) {
 
   const mapStateToProps = (state) =>{
       return {
-          userLocation: state.mapReducer
+          userLocation: state.mapReducer,
+          locationErr: state.locationErr
       }
   }
-  export default connect(mapStateToProps, {removeLocation, addLocation, searchData})(HomeScreen);  
+  export default connect(mapStateToProps, {removeLocation, addLocation, locationError, noLocationError})(HomeScreen);  

@@ -1,14 +1,15 @@
-import React, {useState, useEffect} from 'react'
-import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight,TouchableOpacity, ActivityIndicator,Image  } from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react'
+import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight,TouchableOpacity, 
+    ActivityIndicator,Image, RefreshControl  } from 'react-native';
 import { RecyclerListView, DataProvider } from "recyclerlistview";
 import LayoutProvider from '../LayoutProvider';
-import * as Font from 'expo-font';
 
-// import {calculateDistance} from '../api'
+import {searchGooglePlaces} from '../api'
 import { computeDistanceBetween	} from 'spherical-geometry-js';
 import {connect} from 'react-redux'
 
 import {results} from '../RawData'
+import { searchData } from '../redux/actions';
 
 
 
@@ -28,8 +29,79 @@ const makeGoodData = () => {
 }
 
 
+let isScreenMounted;
+const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchData, searchDataReducer}) => {
 
-const NearbyScreen = ({currentLoc, navigation}) => {
+    const search = async(query, radius) => {
+        lat = currentLoc.coords.latitude
+        long = currentLoc.coords.longitude
+        radius = radius
+        query = query
+        const resp = await searchGooglePlaces(lat, long, radius, query)
+        // await searchData(lat, long, radius, query)
+        // const resp = searchDataReducer
+        if (resp.customError){
+            {isScreenMounted? setInitialError(resp.msg): undefined}
+            setInitialLoading(true)
+            setInitialNoResults(false)
+            return
+        }
+        if (resp.length === 0) 
+        {   
+            setInitialNoResults(true)
+            return
+        }
+        setInitialError("")
+        setInitialNoResults(false)
+        switch(selected){
+            case "HOSPITALS":
+                if(isScreenMounted){
+                setDataProv(dataProvider.cloneWithRows(resp))
+                setHospitalsData(resp)
+                setInitialLoading(false)
+                isLoadingData(false)
+                }
+                return;
+            case "POLICE":
+                if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setPoliceData(resp)
+                    isLoadingData(false)
+                    }
+                return;
+            case "CITY ATTRACTIONS":
+                if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setCityAttractions(resp)
+                    isLoadingData(false)
+                    } 
+                return;
+            case "STORES":
+                if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setStoresData(resp)
+                    isLoadingData(false)
+                }        
+                return;
+            default: 
+                return;                          
+        }
+      }
+    
+
+    useEffect(() => {
+        isScreenMounted = true
+
+        async function runAsyncFunc() { 
+            await search('hospital', 2000) 
+            return;
+        }
+
+        runAsyncFunc()        
+        return (() => {
+            isScreenMounted = false
+        });
+    }, [])
 
     const [selected, setSelected ] = useState("HOSPITALS")
 
@@ -39,15 +111,22 @@ const NearbyScreen = ({currentLoc, navigation}) => {
     });
 
 
+    // temporary state for this screen only, which is not required anywhere else
+    // that's why not storing in redux as it adds complexity
 
+    const [refreshing, setRefreshing] = useState(false);
     const [dataProv, setDataProv] = useState(dataProvider.cloneWithRows([]))
     const [hospitalsData, setHospitalsData] = useState(null)
-    const [hotelsData, setHotelsData] = useState(null)
-    const [attractionsData, setAttractionsData] = useState(null)
-    const [placesData, setPlacesData] = useState(null)
+    const [cityAttractions, setCityAttractions] = useState(null)
+    const [policeData, setPoliceData] = useState(null)
+    const [storesData, setStoresData] = useState(null)
     const [loadingData, isLoadingData] = useState(true)
     const [error, setError] = useState("")
     const [noResults, setNoResults] =useState(false)
+
+    const [initialLoading, setInitialLoading] = useState(true)
+    const [initialError, setInitialError] = useState("")
+    const [initialNoResults, setInitialNoResults] =useState(false)
 
     const goToMap = (geometry, name, vicinity,photos) => {
         navigation.navigate('Map', {
@@ -58,65 +137,97 @@ const NearbyScreen = ({currentLoc, navigation}) => {
         })
     }
 
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+
+        await getLocation()
+        if (locationErr.error) {
+            console.log(locationErr.errMsg)
+            setRefreshing(false)
+        }
+        else{
+            // fetch data from api
+            {isScreenMounted ? isLoadingData(true) : ""}
+                setTimeout(() => {
+                if(isScreenMounted){
+                setSelected("HOSPITALS")
+                setDataProv(dataProvider.cloneWithRows(makeGoodData()))
+                setHospitalsData(dataProv._data)
+                setPoliceData(null)
+                setCityAttractions(null)
+                setStoresData(null)
+                isLoadingData(false)
+                setInitialLoading(false)
+                setRefreshing(false)
+                }
+            }, 2000)
+
+        }
+
+      }, [refreshing]);
+
+
     useEffect(() => {
         // Did this for caching
         switch(selected){
             case "HOSPITALS":
-                if (hospitalsData !== null && hospitalsData.length > 0){
+                if (hospitalsData !== null && hospitalsData.length !== 0){
+                    if(isScreenMounted){
                     setDataProv(dataProvider.cloneWithRows(hospitalsData))
                     isLoadingData(false)
+                    }
                 }
 
                 break;
-            case "ATTRACTIONS":
-                if (attractionsData !== null && hospitalsData.length > 0 ){
-                    setDataProv(dataProvider.cloneWithRows(attractionsData))
+            case "POLICE":
+                if (policeData !== null && policeData.length !== 0 ){
+                    
+                    
+                    if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(policeData))
                     isLoadingData(false)
+                    }
                 } else{
                     // fetch data from api
-                    isLoadingData(true)
-                    setTimeout(() => {
-
-                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-                        setAttractionsData(dataProv._data)
-                        isLoadingData(false)
-                    }, 2000)
+                    {isScreenMounted ? isLoadingData(true) : ""}
+                    async function runAsyncFunc() { 
+                        await search('police', 2000) 
+                        return;
+                    }
+                    runAsyncFunc()
 
                 }
                 break
-            case "HOTELS":
-                if (hotelsData !== null && hospitalsData.length > 0 ){
-                    setDataProv(dataProvider.cloneWithRows(hotelsData))
+            case "CITY ATTRACTIONS":
+                if (cityAttractions !== null && policeData.length !== 0 ){
+                    if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(cityAttractions))
                     isLoadingData(false)
+                    }
                 } else{
                     // fetch data from api
-                    isLoadingData(true)
-                    setTimeout(() => {
-
-                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-                        setHotelsData(dataProv._data)
-                        isLoadingData(false)
-                    }, 2000)
-
-
-
+                    {isScreenMounted? isLoadingData(true): undefined}
+                    async function runAsyncFunc() { 
+                        await search('tourist_attraction', 2000) 
+                        return;
+                    }
+                    runAsyncFunc()
                 }
                 break
-            case "PLACES":
-                if (placesData !== null && hospitalsData.length > 0 ){
-                    setDataProv(dataProvider.cloneWithRows(placesData))
+            case "STORES":
+                if (storesData !== null && policeData.length !== 0 ){
+                    if(isScreenMounted){
+                    setDataProv(dataProvider.cloneWithRows(storesData))
                     isLoadingData(false)
+                    }
                 } else{
-                    // fetch data from api
-                    isLoadingData(true)
-                    setTimeout(() => {
-                        
-                        setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-                        setPlacesData(dataProv._data)
-                        isLoadingData(false)
-                    }, 2000)
-
-
+                    {isScreenMounted? isLoadingData(true): undefined}
+                    async function runAsyncFunc() { 
+                        await search('store', 2000) 
+                        return;
+                    }
+                    runAsyncFunc()
  
                 }
                 break   
@@ -129,47 +240,34 @@ const NearbyScreen = ({currentLoc, navigation}) => {
 
     const selectHospitals = () => {
         if (selected !== "HOSPITALS"){
-            setSelected("HOSPITALS")
+            {isScreenMounted? setSelected("HOSPITALS") : undefined}
             
         }
         return
     }
-    const selectAttractions = () => {
-        if (selected !== "ATTRACTIONS"){
-            setSelected("ATTRACTIONS")
+    const selectPolice = () => {
+        if (selected !== "POLICE"){
+            {isScreenMounted? setSelected("POLICE") : undefined}
 
         }
         return
     }
-    const selectHotels = () => {
-        if (selected !== "HOTELS"){
-            setSelected("HOTELS")
+    const selectCityAttractions = () => {
+        if (selected !== "CITY ATTRACTIONS"){
+            {isScreenMounted? setSelected("CITY ATTRACTIONS") : undefined}
 
         }
         return
     }
-    const selectPlaces = () => {
-        if (selected !== "PLACES"){
-            setSelected("PLACES")
+    const selectStores = () => {
+        if (selected !== "STORES"){
+            {isScreenMounted? setSelected("STORES") : undefined}
 
         }
         return
     }
 
 
-
-    useEffect(() => {
-
-        // setHospitalsRawData(dataProv)
-        // setTimeout(() =>{
-            setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-            setHospitalsData(dataProv._data)
-            isLoadingData(false)
-        // }, 2000)
-
-
-
-    }, [])
 
     let layoutProvider = new LayoutProvider(dataProv)
 
@@ -231,27 +329,59 @@ const NearbyScreen = ({currentLoc, navigation}) => {
 
 
   return (
+
+    
     <View style={styles.container} >
         <ScrollView style={{flex: 1}} horizontal={true}>
             <TouchableOpacity style={{flex: 1}} onPress={selectHospitals}>
             <Text style={[styles.options, selected === "HOSPITALS"? styles.selectedOption: styles.default] }>Hospitals</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{flex: 1}} onPress={selectAttractions}>
-            <Text style={[styles.options, selected === "ATTRACTIONS"? styles.selectedOption: styles.default] }>Attractions</Text>
+            <TouchableOpacity style={{flex: 1}} onPress={selectPolice}>
+            <Text style={[styles.options, selected === "POLICE"? styles.selectedOption: styles.default] }>Police</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{flex: 1}} onPress={selectHotels}>
-            <Text style={[styles.options, selected === "HOTELS"? styles.selectedOption: styles.default] }>Hotels</Text>
+            <TouchableOpacity style={{flex: 1}} onPress={selectCityAttractions}>
+            <Text style={[styles.options, selected === "CITY ATTRACTIONS"? styles.selectedOption: styles.default] }>City Attractions</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{flex: 1}} onPress={selectPlaces}>
-            <Text style={[styles.options, selected === "PLACES"? styles.selectedOption: styles.default] }>Places</Text>
+            <TouchableOpacity style={{flex: 1}} onPress={selectStores}>
+            <Text style={[styles.options, selected === "STORES"? styles.selectedOption: styles.default] }>Stores</Text>
             </TouchableOpacity>
         </ScrollView>
+            
+            {locationErr.error ? 
+            <View style={{flex:7, alignItems: 'center', justifyContent: 'center'}}>
+            <Text>We need your location for app. Give location permission and pull to refersh this app</Text> 
+            </View>
+            :
             <View style={{flex:7}}>
+                {initialLoading? 
+                    <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> :
+                initialError !== "" ? 
+                    <Text>{initialError}</Text> :
+                initialNoResults ? 
+                    <Text>No results</Text> :
+
+                <RecyclerListView 
+                layoutProvider={layoutProvider}
+                dataProvider={dataProv}
+                rowRenderer={rowRenderer}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                  }
+            /> 
+                }
+            {/* {!initialLoading ? 
             <RecyclerListView 
                 layoutProvider={layoutProvider}
                 dataProvider={dataProv}
                 rowRenderer={rowRenderer}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                  }
             /> 
+            :           
+            <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> } */}
+
+
             {loadingData ?
             <View style={styles.overlap}>
             <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
@@ -266,7 +396,9 @@ const NearbyScreen = ({currentLoc, navigation}) => {
             </View>
             :<View />
             }
-            </View>
+
+        </View> 
+        }
 
     </View>
   )
@@ -384,6 +516,8 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state) => {
     return {
         currentLoc: state.mapReducer,
+        locationErr: state.locationErr,
+        searchDataReducer: state.searchDataReducer
     }
 }
-export default connect(mapStateToProps)(NearbyScreen);  
+export default connect(mapStateToProps, {searchData})(NearbyScreen);  

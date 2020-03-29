@@ -8,7 +8,7 @@ import {connect} from 'react-redux';
 const MapScreen = ({userLocation, route}) => {
     const pinColor = 'yellow';
 
-    useEffect(() => console.log(userLocation.coords, destinationGeometry.location))
+    // useEffect(() => console.log(userLocation.coords, destinationGeometry.location))
     const {destinationGeometry, destinationName, destinationVicinity, destinationPhotos} = route.params
 
     const destination = () => {
