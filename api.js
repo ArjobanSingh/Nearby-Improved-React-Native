@@ -39,3 +39,20 @@ export const searchGooglePlaces = async(lat, long, radius, query) => {
         return realResults
     }
 
+export const searchPredictedPlaces = async(lat, lon, radius, query) => {
+    try{
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&location=${lat},${lon}&radius=${radius}&key=${CONF_API_KEY}`
+        const response = await fetch(url)
+        const json = await response.json()
+        if (json.status === "INVALID_REQUEST"){
+            return {msg:"INVALID REQUEST", customError: true}
+        }
+        else if(json.status === "OK"){
+            return json.predictions
+        }
+    }
+    catch(e){
+        return {msg:e.message, customError: true}
+    }
+}    
+

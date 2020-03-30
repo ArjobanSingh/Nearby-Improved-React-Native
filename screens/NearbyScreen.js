@@ -9,7 +9,7 @@ import { computeDistanceBetween	} from 'spherical-geometry-js';
 import {connect} from 'react-redux'
 
 import {results} from '../RawData'
-import { searchData } from '../redux/actions';
+
 
 
 
@@ -30,7 +30,7 @@ const makeGoodData = () => {
 
 
 let isScreenMounted;
-const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchData, searchDataReducer}) => {
+const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
     const search = async(query, radius) => {
         lat = currentLoc.coords.latitude
@@ -38,8 +38,6 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
         radius = radius
         query = query
         const resp = await searchGooglePlaces(lat, long, radius, query)
-        // await searchData(lat, long, radius, query)
-        // const resp = searchDataReducer
         if (resp.customError){
             {isScreenMounted? setInitialError(resp.msg): undefined}
             setInitialLoading(true)
@@ -54,6 +52,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
         setInitialError("")
         setInitialNoResults(false)
         switch(selected){
+            
             case "HOSPITALS":
                 if(isScreenMounted){
                 setDataProv(dataProvider.cloneWithRows(resp))
@@ -91,7 +90,9 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
 
     useEffect(() => {
         isScreenMounted = true
-
+        const unsubscribe = navigation.addListener('focus', () => {
+            console.log("NEARBY IS FOCUSED")
+          });
         async function runAsyncFunc() { 
             await search('hospital', 2000) 
             return;
@@ -100,6 +101,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
         runAsyncFunc()        
         return (() => {
             isScreenMounted = false
+            unsubscribe()
         });
     }, [])
 
@@ -143,17 +145,14 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
 
         await getLocation()
         if (locationErr.error) {
-            console.log(locationErr.errMsg)
             setRefreshing(false)
         }
         else{
             // fetch data from api
             {isScreenMounted ? isLoadingData(true) : ""}
-                setTimeout(() => {
                 if(isScreenMounted){
                 setSelected("HOSPITALS")
-                setDataProv(dataProvider.cloneWithRows(makeGoodData()))
-                setHospitalsData(dataProv._data)
+                await search('hospital', 2000)
                 setPoliceData(null)
                 setCityAttractions(null)
                 setStoresData(null)
@@ -161,7 +160,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
                 setInitialLoading(false)
                 setRefreshing(false)
                 }
-            }, 2000)
+
 
         }
 
@@ -369,17 +368,6 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr, searchD
                   }
             /> 
                 }
-            {/* {!initialLoading ? 
-            <RecyclerListView 
-                layoutProvider={layoutProvider}
-                dataProvider={dataProv}
-                rowRenderer={rowRenderer}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                  }
-            /> 
-            :           
-            <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> } */}
 
 
             {loadingData ?
@@ -517,7 +505,6 @@ const mapStateToProps = (state) => {
     return {
         currentLoc: state.mapReducer,
         locationErr: state.locationErr,
-        searchDataReducer: state.searchDataReducer
     }
 }
-export default connect(mapStateToProps, {searchData})(NearbyScreen);  
+export default connect(mapStateToProps)(NearbyScreen);  

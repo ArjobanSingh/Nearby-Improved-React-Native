@@ -1,5 +1,5 @@
 import signInWithGoogleAsync from '../google_signIn'
-import {searchGooglePlaces} from '../api'
+import {searchGooglePlaces, searchPredictedPlaces} from '../api'
 import {results} from '../RawData'
 
 const LOGIN = "LOGIN"
@@ -8,85 +8,41 @@ const LOADING = "LOADING"
 const LOGIN_ERROR = "LOGIN_ERROR"
 const ADD_LOCATION = "ADD_LOCATION"
 const REMOVE_LOCATION = "REMOVE_LOCATION"
-const SEARCH_ERROR = "SEARCH_ERROR"
-const LOADING_DATA = "LOADING_DATA"
-const CANCEL_LOADING_DATA = "CANCEL_LOADING_DATA"
-const SET_SEARCH_DATA = "SET_SEARCH_DATA"
 const LOCATION_ERROR ="LOCATION_ERROR"
 const NO_LOCATION_ERROR = "NO_LOCATION_ERROR"
 
-// export const SET_HOSPITALS_RAW_DATA = "SET_HOSPITALS_RAW_DATA"
-// export const SET_ATTRACTIONS_RAW_DATA = "SET_ATTRACTIONS_RAW_DATA"
-// export const SET_HOTELS_RAW_DATA = "SET_HOTELS_RAW_DATA"
-// export const SET_PLACES_RAW_DATA = "SET_PLACES_RAW_DATA"
-// export const DELETE_RAW_DATA = "DELETE_RAW_DATA"
-// // export const DATA_PROVIDER = "DATA_PROVIDER"
+
+const PREDICTED_ERROR = "PREDICTED_ERROR"
+const SET_PREDICTED_DATA = "SET_PREDICTED_DATA"
 
 
-// const makeGoodData = () => {
-//     let realResults = results.map((item) => {
-//         return {name: item.name, type: "NORMAL", id: item.id, vicinity: item.vicinity, rating: item.rating}
-//     })
-//     return realResults
-// }
 
-// export const provideData = (data_provider) => {
-//     return {
-//         type: DATA_PROVIDER,
-//         payload : {
-//             data_provider
-//         }
-//     }
-// }
+const setPredicteddata = (data) => {
+    return {
+        type: SET_PREDICTED_DATA, 
+        payload: {data}
+    }
+}
 
-// export const setHospitalsRawData = (hospitals_raw_data) =>{
-
-//     return {
-//         type: SET_HOSPITALS_RAW_DATA,
-//         payload:{
-//             hospitals_raw_data
-//         }
-//     }
-// }
+const predictedError = (err) => {
+    return {
+        type: PREDICTED_ERROR,
+        payload: {err}
+    }
+}
 
 
-// export const setAttractionsRawData = (attractions_raw_data) =>{
+const searchPrdicted = (lat, lon, radius, query) => {
+    return (async(dispatch) => {
+        const resp = await searchPredictedPlaces(lat, lon, radius, query)
+        if (!resp.customError){
+            dispatch(setPredicteddata(resp))
+            return
+        }
+        dispatch(predictedError(resp.msg))
+    })
+}
 
-//     return {
-//         type: SET_ATTRACTIONS_RAW_DATA,
-//         payload:{
-//             attractions_raw_data
-//         }
-//     }
-// }
-
-
-// export const setHotelsRawData = (hotels_raw_data) =>{
-
-//     return {
-//         type: SET_HOTELS_RAW_DATA,
-//         payload:{
-//             hotels_raw_data
-//         }
-//     }
-// }
-
-
-// export const setPlacesRawData = (places_raw_data) =>{
-
-//     return {
-//         type: SET_PLACES_RAW_DATA,
-//         payload:{
-//             places_raw_data
-//         }
-//     }
-// }
-
-// export const delRawData = () => {
-//     return {
-//         type: DELETE_RAW_DATA
-//     }
-// }
 
 const noLocationError = () => {
     return {
@@ -100,54 +56,6 @@ const locationError = (err) => {
         payload : {
             locationErr: err
         }
-    }
-}
-
-const searchData = (lat, long, radius, query) => {
-    return (async(dispatch) => {
-        dispatch(loadingData())
-
-        const jsonResponse = await searchGooglePlaces(lat, long, radius, query)
-        
-        if (!jsonResponse.customError){
-            console.log("GOOGLE JSON", jsonResponse)
-            dispatch(setSearchData(jsonResponse))
-            dispatch(cancelLoadingData())
-            return
-        }
-        dispatch(searchError(jsonResponse.msg))
-        dispatch(cancelLoadingData())
-    })
-}
-
-const searchError = (error) => {
-    return {
-        type: SEARCH_ERROR,
-        payload: {
-            error
-        }
-    }
-}
-
-const setSearchData = (searchData) => {
-    return {
-        type: SET_SEARCH_DATA,
-        payload: {
-            searchData
-        }
-    }
-}
-
-
-const cancelLoadingData = () => {
-    return {
-        type: CANCEL_LOADING_DATA
-    }
-}
-
-const loadingData = () => {
-    return {
-        type: LOADING_DATA
     }
 }
 
@@ -202,6 +110,7 @@ const loginError = (err) => {
     }
 }
 
-export { LOGIN, LOGOUT, LOADING,LOGIN_ERROR, ADD_LOCATION, REMOVE_LOCATION ,SEARCH_ERROR, 
-    LOADING_DATA,CANCEL_LOADING_DATA, SET_SEARCH_DATA, LOCATION_ERROR, NO_LOCATION_ERROR, 
-    handleLogin,loading, logout, removeLocation,addLocation, searchData, locationError, noLocationError}
+export { LOGIN, LOGOUT, LOADING,LOGIN_ERROR, ADD_LOCATION, REMOVE_LOCATION ,LOCATION_ERROR, NO_LOCATION_ERROR,  
+    PREDICTED_ERROR, SET_PREDICTED_DATA,
+    handleLogin,loading, logout, removeLocation,addLocation, locationError, 
+    noLocationError, setPredicteddata, predictedError, searchPrdicted}

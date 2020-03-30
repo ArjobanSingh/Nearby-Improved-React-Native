@@ -33,8 +33,12 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
               'Oops, this will not work on Sketch in an Android emulator. Try it on your device!',
             ): undefined}
           } else {
-            (async() => await _getLocationAsync())()
-            
+
+            async function runAsync(){
+              await _getLocationAsync()
+            } 
+            // (async() => await _getLocationAsync())()
+            runAsync()
           }
 
 

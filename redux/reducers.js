@@ -1,34 +1,7 @@
-import {LOGIN, LOGOUT, LOGIN_ERROR, LOADING, REMOVE_LOCATION, ADD_LOCATION,
-    SEARCH_ERROR, LOADING_DATA,CANCEL_LOADING_DATA, SET_SEARCH_DATA,LOCATION_ERROR,
-    NO_LOCATION_ERROR } from './actions'
+import {LOGIN, LOGOUT, LOGIN_ERROR, LOADING, REMOVE_LOCATION, ADD_LOCATION,LOCATION_ERROR,
+    NO_LOCATION_ERROR, PREDICTED_ERROR, SET_PREDICTED_DATA } from './actions'
 import { combineReducers } from 'redux'
 
-
-// export const dataProviderReducer = (state=null, action) => {
-//     switch(action.type){
-//         case DATA_PROVIDER:
-//             return action.payload.data_provider
-//         default:
-//             return state    
-//     }
-// }
-
-// const rawData = (state={ attractions: null, hotels: null, places: null, hospitals :null}, action) => {
-//     switch(action.type){
-//         case SET_HOSPITALS_RAW_DATA:
-//             return {...state, hospitals: action.payload.hospitals_raw_data}
-//         case SET_ATTRACTIONS_RAW_DATA:
-//             return {...state, attractions: action.payload.attractions_raw_data}
-//         case SET_HOTELS_RAW_DATA:
-//             return {...state, hotels: action.payload.hotels_raw_data}
-//         case SET_PLACES_RAW_DATA:
-//              return {...state, places: action.payload.places_raw_data}
-//         case DELETE_RAW_DATA:
-//             return {attractions: null, hotels: null, places: null, hospitals :null}
-//         default:
-//             return state        
-//     }
-// }
 
 const locationErr = (state={error: false, errMsg: ""},action ) => {
     switch(action.type){
@@ -41,20 +14,6 @@ const locationErr = (state={error: false, errMsg: ""},action ) => {
     }
 }
 
-const searchDataReducer = (state={loadingData : false, data :null, dataError : null, error : false}, action) => {
-    switch(action.type){
-        case LOADING_DATA:
-            return {...state, loadingData: true}
-        case CANCEL_LOADING_DATA:
-            return {...state, loadingData: false}
-        case SEARCH_ERROR:
-            return {...state, data:null, dataError:action.payload.error, error : true} 
-        case SET_SEARCH_DATA:
-            return {...state, dataError:null, data:action.payload.searchData, error : false}        
-        default:
-            return state       
-    }
-}
 
 const isLoginReducer = (state = {isLoggedIn: false, error:'', token:'', loadingLogin: false}, action) => {
     switch (action.type){
@@ -82,11 +41,22 @@ const mapReducer = (state = null, action) => {
     }
 }
 
+const predictedDataState = (state={ error:false, errMsg:"", data:[]}, action) => {
+    switch(action.type){
+        case SET_PREDICTED_DATA:
+            return {error : false, errMsg:"", data:action.payload.data}
+        case PREDICTED_ERROR:
+            return {error : true, errMsg:action.payload.err, data:[]}
+        default:
+            return state        
+    }
+}
+
 export default combineReducers({
     isLoginReducer,
     mapReducer,
-    searchDataReducer,
-    locationErr
+    locationErr,
+    predictedDataState
   })
 
 
