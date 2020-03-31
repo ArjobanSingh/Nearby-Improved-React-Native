@@ -1,32 +1,108 @@
-import React, {useState} from 'react'
-import { StyleSheet, TouchableHighlight, View, Text, Dimensions, TextInput, FlatList  } from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react'
+import { StyleSheet, TouchableHighlight, View, Text, Dimensions, TextInput, 
+  FlatList, ActivityIndicator, RefreshControl  } from 'react-native';
 import Item from '../components/Item'
 
 import {connect} from 'react-redux';
-import { searchPrdicted} from '../redux/actions'
+import { searchPrdicted,removePredictedData} from '../redux/actions'
+import {getLocationDetails} from '../api'
 
 const { width } = Dimensions.get('window')
 
-
-const SearchScreen = ({ data, searchPrdicted, userLocation}) => {
+let isScreenMounted;
+const SearchScreen = ({ data, searchPrdicted, userLocation,getLocation, navigation, locationErr, removePredictedData}) => {
 
 const [query, setquery] = useState("")
 const [dataAvailable, setDataAvailable] = useState(false)
+const [loadingLocationData, setLoadingLocationData] = useState(false)
+const [locationDataError, setlocationDataError] = useState(false)
+const [errorDetail, setErrorDetail] = useState('')
+const [refreshing, setRefreshing] = useState(false);
+const [initialLoading, setInitialLoading] = useState(false)
+
+
+useEffect(() => {
+  isScreenMounted = true;
+  const unsubscribe = navigation.addListener('focus', () => {
+    console.log("SEARCH IS FOCUSED")
+  });
+ 
+
+  return (() => {
+    isScreenMounted = false;
+    unsubscribe()
+  })
+})
+
+const onRefresh = useCallback(async () => {
+  setRefreshing(true);
+
+  await getLocation()
+  if (locationErr.error) {
+      setRefreshing(false)
+  }
+  else{
+      // fetch data from api
+          if(isScreenMounted){
+          if (query.length > 0) {
+            console.log(query)
+            await searchData()}
+          else removePredictedData()
+          setRefreshing(false)
+          }
+
+
+  }
+
+}, [refreshing]);
+
+
+const goToMap = (geometry, name, vicinity,photos) => {
+  navigation.navigate('Map', {
+      destinationGeometry: geometry,
+      destinationName: name,
+      destinationVicinity: vicinity,
+      destinationPhotos: photos
+  })
+}
 
 const changeQuery = (innerQuery) => {
     setquery(innerQuery)
 }  
 
-const openLocation = (reference) => {
+// Was facing some problem with async actions in redux, so implemented directly this without redux
+const openLocation = async(reference) => {
+  setLoadingLocationData(true)
+  const jsonResp = await getLocationDetails(reference)
+
+
+      if (jsonResp.customError){
+        setLoadingLocationData(false)
+        setlocationDataError(true)
+        setErrorDetail(jsonResp.msg)
+        return
+      }
+
+        const {geometry, name, vicinity} = jsonResp
+        setLoadingLocationData(false)
+        setlocationDataError(false)
+        setErrorDetail('')
+        goToMap(geometry, name, vicinity)
+
+      return
+
 }
 
 const searchData = async() =>{
+  setInitialLoading(true)
     await searchPrdicted(userLocation.coords.latitude,userLocation.coords.longitude, 2000, query )
     if (data.error !== true){
+        setInitialLoading(false)
         setDataAvailable(true)
         return
 
     }
+    setInitialLoading(false)
     setDataAvailable(false)
 }
 
@@ -40,7 +116,11 @@ const searchData = async() =>{
         </TouchableHighlight>
         </View>
 
-        {dataAvailable && data.data.length > 0 ?   
+        {initialLoading? 
+            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                  <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+            </View>
+        :dataAvailable && data.data.length > 0 ?   
 
             <FlatList
             data={data.data}
@@ -50,8 +130,24 @@ const searchData = async() =>{
                                         reference={item.reference}
                                         openLocation={openLocation}/>}
             keyExtractor={item => item.place_id}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
             />
-            : <Text>No Data Available</Text>}
+            : <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+                <Text style={{fontWeight: 'bold', fontSize: 20}}>No Data Available</Text>
+              </View>}
+
+        {loadingLocationData ? 
+          <View style={styles.overlap}>
+              <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+          </View>
+        :locationDataError ?
+          <View style={styles.overlap}>
+            <Text>{errorDetail}</Text>
+          </View>
+        : <View></View>
+        }    
     </View>
   )
 } 
@@ -87,16 +183,13 @@ const styles = StyleSheet.create({
         width: Dimensions.get('window').width,
         height: Dimensions.get('window').height - 50
       },
-//     paragraph: {
-//         margin: 24,
-//         fontSize: 18,
-//         textAlign: 'center',
-//       },
-//       container: {
-//         flex: 1,
-//         backgroundColor: '#fff',
-//         justifyContent: 'center',
-//       },
+      overlap: {
+      position:'absolute', 
+      height:'100%',
+      width:width, 
+      flex: 1, 
+      backgroundColor: 'white'
+      },
 //       mapButton : {
 //           height: "5%",
 //           width: width - 20,
@@ -126,8 +219,9 @@ const styles = StyleSheet.create({
    const mapStateToProps = (state) =>{
     return {
         data : state.predictedDataState,
-        userLocation: state.mapReducer
+        userLocation: state.mapReducer,
+        locationErr: state.locationErr,
     }
    }
 
-export default connect(mapStateToProps, { searchPrdicted})(SearchScreen);  
+export default connect(mapStateToProps, { searchPrdicted, removePredictedData})(SearchScreen);  

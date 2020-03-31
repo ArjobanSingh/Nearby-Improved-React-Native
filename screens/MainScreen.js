@@ -25,7 +25,6 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
 
 
     useEffect(() => {
-      console.log("STARTED MOUNTING")
         isMounted = true;
         AppState.addEventListener('change', handleAppStateChange)
         if (Platform.OS === 'android' && !Constants.isDevice) {
@@ -55,7 +54,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
             nextAppState === 'active'
           ) {
             console.log('App has come to the foreground!');
-            await getLocationAsync();
+            await _getLocationAsync();
           }
           {isMounted ? setAppState(nextAppState) : undefined};
         }
@@ -78,15 +77,13 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
       };
 
 
-    const someData = async() => {
-        if (await Location.hasServicesEnabledAsync()){
-            console.log("Enabled")
-            return
-        }
-        else {
-            console.log("Enable Location")
-        }
-    }
+    // const someData = async() => {
+    //     if (await Location.hasServicesEnabledAsync()){
+    //         return
+    //     }
+    //     else {
+    //     }
+    // }
 
     const openMapScreen = () =>{
       navigation.navigate('Map')
@@ -109,30 +106,9 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
         </View>
         :
         <MyTabs 
-        someData={someData}
-        pressStatus={pressStatus}
-        text={text}
-        isMounted={isMounted}
-        setPressStatus={setPressStatus}
-        openMapScreen={openMapScreen}
         _getLocationAsync={_getLocationAsync}
       /> 
         }
-        {/* {locationErr.error === false?
-        <MyTabs 
-        someData={someData}
-        pressStatus={pressStatus}
-        text={text}
-        isMounted={isMounted}
-        setPressStatus={setPressStatus}
-        openMapScreen={openMapScreen}
-        _getLocationAsync={_getLocationAsync}
-      /> 
-      :locationErr.error === false? <Text>Loading...</Text> :
-      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>We need your location for app. Give location permission!</Text> 
-      </View>
-      } */}
       </View>
 
     )
@@ -165,12 +141,7 @@ function MyTabs(props) {
         {navigationProps => 
             <SearchScreen 
                 {...navigationProps}
-                someData={props.someData}
-                pressStatus={props.pressStatus}
-                text={props.text}
-                isMounted={props.isMounted}
-                setPressStatus={props.setPressStatus}
-                openMapScreen={props.openMapScreen} 
+                getLocation={props._getLocationAsync}
             />
         }
       </Tab.Screen>

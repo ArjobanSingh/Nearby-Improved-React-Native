@@ -1,15 +1,42 @@
-import React, {useEffect} from 'react';
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
-import MapView, {Marker, PROVIDER_GOOGLE  } from 'react-native-maps';
+import React, {useEffect, useState} from 'react';
+import { StyleSheet, View, Dimensions } from 'react-native';
+import MapView, {Marker, PROVIDER_GOOGLE, Polyline   } from 'react-native-maps';
+
+import {getDirections} from '../api'
 
 import {connect} from 'react-redux';
 
 
 const MapScreen = ({userLocation, route}) => {
+
+    useEffect(() => {
+        async function runAsync(){
+            await mergeLot()
+        }
+        runAsync()
+    }, [])
+
+    const [polylineCoords, setPolylineCoords] = useState([])
+    const [x, setX] = useState(false)
+
     const pinColor = 'yellow';
 
 
     const {destinationGeometry, destinationName, destinationVicinity} = route.params
+
+    const mergeLot = async() => {
+        if (userLocation.coords.latitude != null && userLocation.coords.longitude !=null)
+         {
+            const initLocation = `${userLocation.coords.latitude},${userLocation.coords.longitude}`
+            const destLoc = `${destinationGeometry.location.lat},${destinationGeometry.location.lng}`
+
+            const [crds, xVal] = await getDirections(initLocation, destLoc)
+
+            setX(xVal)
+            setPolylineCoords(crds)
+         }
+    
+       }
 
     const destination = () => {
         return {
@@ -33,6 +60,19 @@ const MapScreen = ({userLocation, route}) => {
                     longitudeDelta: 0.0381,
                   }}>
 
+            {setX? 
+            <Polyline
+                coordinates={polylineCoords}
+                strokeWidth={2}
+                strokeColor="red"/>    
+            : 
+            <Polyline
+            coordinates={[
+                {latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude},
+                {latitude: destinationGeometry.location.lat, longitude: destinationGeometry.location.lng},
+            ]}
+            strokeWidth={2}
+        strokeColor="red"/>     }       
 
         <Marker
             coordinate={userLocation.coords}

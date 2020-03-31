@@ -4,29 +4,15 @@ import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight,Touc
 import { RecyclerListView, DataProvider } from "recyclerlistview";
 import LayoutProvider from '../LayoutProvider';
 
-import {searchGooglePlaces} from '../api'
+import {searchGooglePlaces, CONF_API_KEY} from '../api'
 import { computeDistanceBetween	} from 'spherical-geometry-js';
 import {connect} from 'react-redux'
 
-import {results} from '../RawData'
 
 
 
 
 const { width } = Dimensions.get('window')
-
-
-
-const makeGoodData = () => {
-
-
-
-    let realResults = results.map((item) => {
-        return {name: item.name, type: "ITEM_SPAN_2", id: item.id, vicinity: item.vicinity, 
-        rating: item.rating, icon: item.icon, geometry: item.geometry, photos: item.photos}
-    })
-    return realResults
-}
 
 
 let isScreenMounted;
@@ -191,6 +177,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                     // fetch data from api
                     {isScreenMounted ? isLoadingData(true) : ""}
                     async function runAsyncFunc() { 
+                        console.log("Fetching again...")
                         await search('police', 2000) 
                         return;
                     }
@@ -283,6 +270,10 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
 
         let {name, rating, vicinity, icon, geometry, photos} = data
+        let url
+        {photos !== undefined && photos[0].photo_reference !== undefined?
+            url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=150&maxheight=150&photoreference=${photos[0].photo_reference}&key=${CONF_API_KEY}`:
+            url = icon}
         let helper;
         if (rating){
             helper =  parseFloat((5.0 - rating).toString().slice(0,5));
@@ -301,7 +292,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                             <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
                             <Image
                                     style={styles.imageStyle}
-                                    source={{uri: icon}}
+                                    source={{uri: url}}
                                 />   
                             </View>
     
@@ -449,8 +440,8 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     imageStyle: {
-        width: 70, 
-        height: 70,
+        width: '95%', 
+        height: '95%',
 
     },
     doubleSpanStyle:{ 

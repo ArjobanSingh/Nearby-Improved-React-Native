@@ -1,5 +1,6 @@
 // const API_KEY = ``;
-const CONF_API_KEY = 'API KEY'
+import Polyline from '@mapbox/polyline';
+export const CONF_API_KEY = 'API'
 
 
 // export const searchPlaces = async(lat, long, radius, query) => {
@@ -41,7 +42,7 @@ export const searchGooglePlaces = async(lat, long, radius, query) => {
 
 export const searchPredictedPlaces = async(lat, lon, radius, query) => {
     try{
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&location=${lat},${lon}&radius=${radius}&key=${CONF_API_KEY}`
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&location=${lat},${lon}&radius=${radius}&strictbounds&key=${CONF_API_KEY}`
         const response = await fetch(url)
         const json = await response.json()
         if (json.status === "INVALID_REQUEST"){
@@ -54,5 +55,43 @@ export const searchPredictedPlaces = async(lat, lon, radius, query) => {
     catch(e){
         return {msg:e.message, customError: true}
     }
-}    
+} 
+
+export const getLocationDetails = async(reference) => {
+    try{
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?reference=${reference}&sensor=true&key=${CONF_API_KEY}`
+        const response = await fetch(url)
+        const json = await response.json()
+        if (json.status === "INVALID_REQUEST"){
+            return {msg: "INVALID_REQUEST", customError: true}
+        }
+        else if(json.status === "OK"){
+            return json.result
+        }
+    }
+    catch(e){
+        return {msg: e.message, customError: true}
+    }
+}
+
+
+export const getDirections = async(startLoc, destinationLoc) => {
+
+    try {
+        let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${ startLoc }&destination=${ destinationLoc }&key=${CONF_API_KEY}`)
+        let respJson = await resp.json();
+        let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
+        let coords = points.map((point, index) => {
+            return  {
+                latitude : point[0],
+                longitude : point[1]
+            }
+        })
+        // this.setState({coords: coords})
+        return [coords, true]
+    } catch(error) {
+        // alert(error)
+        return [error, false]
+    }
+}
 

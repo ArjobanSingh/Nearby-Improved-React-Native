@@ -2,10 +2,14 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image} from 'react-native';
 
 export default function Item(props) {
+
+    const goToLocation = async() => {
+      await props.openLocation(props.reference)
+    }
     return (
         <TouchableOpacity
         style={styles.btnStyle}
-        onPress={() => props.openLocation(props.reference) }>
+        onPress={goToLocation}>
             <View style={styles.horizonalContainerChild}>
                 <View style={styles.imageStyle}>
                 
