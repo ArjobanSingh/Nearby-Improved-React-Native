@@ -11,12 +11,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { connect } from 'react-redux';
 
-import * as firebase from 'firebase';
+// import * as firebase from 'firebase';
 
 
-import {firebaseConfig} from '../config';
+// import {firebaseConfig} from '../config';
 
-firebase.initializeApp(firebaseConfig);
+// firebase.initializeApp(firebaseConfig);
 
 
 const Tab = createBottomTabNavigator();
@@ -26,13 +26,14 @@ const MainStack = createStackNavigator();
 function MainApp(props) {
   return (
     <NavigationContainer>
-        <MainStack.Navigator>
+        {/* <MainStack.Navigator>
             {!props.isLoggedIn ?
             <MainStack.Screen name ="login" component={LoginScreen}  options={{ headerShown: false }}/>
             :
             <MainStack.Screen name ="MainTab" component={TabNavigator}  options={{ headerShown: false }}/>
         }
-        </MainStack.Navigator>
+        </MainStack.Navigator> */}
+        <TabNavigator />
     </NavigationContainer>
   );
 }

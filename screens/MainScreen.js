@@ -3,6 +3,7 @@ import {  Platform,View, AppState, StyleSheet, Text } from 'react-native';
 import NearbyScreen from './NearbyScreen'
 import SearchScreen from './SearchScreen'
 
+
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -10,6 +11,8 @@ import * as Permissions from 'expo-permissions';
 import {connect} from 'react-redux';
 import {addLocation, removeLocation,  locationError, noLocationError} from '../redux/actions'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+
+
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -33,11 +36,12 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
             ): undefined}
           } else {
 
-            async function runAsync(){
-              await _getLocationAsync()
-            } 
-            // (async() => await _getLocationAsync())()
-            runAsync()
+            // async function runAsync(){
+            //   await _getLocationAsync()
+            // } 
+            // // (async() => await _getLocationAsync())()
+            // runAsync()
+            _getLocationAsync()
           }
 
 
@@ -48,13 +52,13 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
         })
     }, [])
 
-    const handleAppStateChange = async(nextAppState) => {
+    const handleAppStateChange = (nextAppState) => {
         if (
             appState.match(/inactive|background/) &&
             nextAppState === 'active'
           ) {
             console.log('App has come to the foreground!');
-            await _getLocationAsync();
+            _getLocationAsync();
           }
           {isMounted ? setAppState(nextAppState) : undefined};
         }
@@ -107,7 +111,7 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
         :
         <MyTabs 
         _getLocationAsync={_getLocationAsync}
-      /> 
+        /> 
         }
       </View>
 

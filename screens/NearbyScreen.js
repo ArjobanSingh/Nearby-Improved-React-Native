@@ -1,15 +1,13 @@
 import React, {useState, useEffect, useCallback} from 'react'
 import { StyleSheet, Text, View, ScrollView, Dimensions, TouchableHighlight,TouchableOpacity, 
     ActivityIndicator,Image, RefreshControl  } from 'react-native';
-import { RecyclerListView, DataProvider } from "recyclerlistview";
-import LayoutProvider from '../LayoutProvider';
 
 import {searchGooglePlaces, CONF_API_KEY} from '../api'
 import { computeDistanceBetween	} from 'spherical-geometry-js';
 import {connect} from 'react-redux'
 
-
-
+import MapView, {Marker, PROVIDER_GOOGLE, Polyline   } from 'react-native-maps';
+import {getDirections} from '../api'
 
 
 const { width } = Dimensions.get('window')
@@ -17,6 +15,42 @@ const { width } = Dimensions.get('window')
 
 let isScreenMounted;
 const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
+
+    
+
+    const destination = (lats, longs) => {
+        return {
+            "accuracy": 16,
+            "altitude": 0,
+            "heading": 0,
+            "latitude": lats,
+            "longitude": longs,
+            "speed": 0,
+        }
+    }
+    async function onPressMarker(event){
+        setMarkerLineLoading(true)
+        const markerInfo = event.nativeEvent;
+        await mergeLot(markerInfo.coordinate.latitude, markerInfo.coordinate.longitude)
+    }
+
+    function setMarkers(markerData){
+        const pinColor = 'yellow';
+        let markers = markerData.map((item) => {
+            coordinateData = destination(item.geometry.location.lat, item.geometry.location.lng)
+            return (
+                <Marker
+                key={item.id}
+                coordinate={coordinateData}
+                title={item.name}
+                description={item.vicinity}
+                pinColor={pinColor}
+                onPress={onPressMarker}
+            />
+            )
+        });
+        setMarkersList(markers);
+    }
 
     const search = async(query, radius) => {
         lat = currentLoc.coords.latitude
@@ -26,7 +60,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         const resp = await searchGooglePlaces(lat, long, radius, query)
         if (resp.customError){
             {isScreenMounted? setInitialError(resp.msg): undefined}
-            setInitialLoading(true)
+            setInitialLoading(false)
             setInitialNoResults(false)
             return
         }
@@ -41,30 +75,34 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             
             case "HOSPITALS":
                 if(isScreenMounted){
-                setDataProv(dataProvider.cloneWithRows(resp))
+                setRealData(resp)
                 setHospitalsData(resp)
+                setMarkers(resp)
                 setInitialLoading(false)
                 isLoadingData(false)
                 }
                 return;
             case "POLICE":
                 if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setRealData(resp)
                     setPoliceData(resp)
+                    setMarkers(resp)
                     isLoadingData(false)
                     }
                 return;
             case "CITY ATTRACTIONS":
                 if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setRealData(resp)
                     setCityAttractions(resp)
+                    setMarkers(resp)
                     isLoadingData(false)
                     } 
                 return;
             case "STORES":
                 if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(resp))
+                    setRealData(resp)
                     setStoresData(resp)
+                    setMarkers(resp)
                     isLoadingData(false)
                 }        
                 return;
@@ -76,6 +114,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
     useEffect(() => {
         isScreenMounted = true
+        {console.log(locationErr.error)}
         const unsubscribe = navigation.addListener('focus', () => {
             console.log("NEARBY IS FOCUSED")
           });
@@ -94,16 +133,11 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
     const [selected, setSelected ] = useState("HOSPITALS")
 
 
-    let dataProvider = new DataProvider((r1, r2) => {
-        return r1 !== r2;
-    });
-
-
     // temporary state for this screen only, which is not required anywhere else
     // that's why not storing in redux as it adds complexity
 
     const [refreshing, setRefreshing] = useState(false);
-    const [dataProv, setDataProv] = useState(dataProvider.cloneWithRows([]))
+    const [realData, setRealData] = useState(null)
     const [hospitalsData, setHospitalsData] = useState(null)
     const [cityAttractions, setCityAttractions] = useState(null)
     const [policeData, setPoliceData] = useState(null)
@@ -111,19 +145,12 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
     const [loadingData, isLoadingData] = useState(true)
     const [error, setError] = useState("")
     const [noResults, setNoResults] =useState(false)
+    const [markersList, setMarkersList] = useState(null)
+    const [markerLineLoading, setMarkerLineLoading] = useState(false)
 
     const [initialLoading, setInitialLoading] = useState(true)
     const [initialError, setInitialError] = useState("")
     const [initialNoResults, setInitialNoResults] =useState(false)
-
-    const goToMap = (geometry, name, vicinity,photos) => {
-        navigation.navigate('Map', {
-            destinationGeometry: geometry,
-            destinationName: name,
-            destinationVicinity: vicinity,
-            destinationPhotos: photos
-        })
-    }
 
 
     const onRefresh = useCallback(async () => {
@@ -159,7 +186,8 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             case "HOSPITALS":
                 if (hospitalsData !== null && hospitalsData.length !== 0){
                     if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(hospitalsData))
+                    setRealData(hospitalsData)
+                    setMarkers(hospitalsData)
                     isLoadingData(false)
                     }
                 }
@@ -170,7 +198,8 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                     
                     
                     if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(policeData))
+                    setRealData(policeData)
+                    setMarkers(policeData)
                     isLoadingData(false)
                     }
                 } else{
@@ -188,7 +217,8 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             case "CITY ATTRACTIONS":
                 if (cityAttractions !== null && policeData.length !== 0 ){
                     if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(cityAttractions))
+                    setRealData(cityAttractions)
+                    setMarkers(cityAttractions)
                     isLoadingData(false)
                     }
                 } else{
@@ -204,7 +234,8 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             case "STORES":
                 if (storesData !== null && policeData.length !== 0 ){
                     if(isScreenMounted){
-                    setDataProv(dataProvider.cloneWithRows(storesData))
+                    setRealData(storesData)
+                    setMarkers(storesData)
                     isLoadingData(false)
                     }
                 } else{
@@ -227,13 +258,20 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
     const selectHospitals = () => {
         if (selected !== "HOSPITALS"){
             {isScreenMounted? setSelected("HOSPITALS") : undefined}
-            
+            if (isScreenMounted){
+                setPolylineCoords([])
+                setX(false)
+            }
         }
         return
     }
     const selectPolice = () => {
         if (selected !== "POLICE"){
             {isScreenMounted? setSelected("POLICE") : undefined}
+            if (isScreenMounted){
+                setPolylineCoords([])
+                setX(false)
+            }
 
         }
         return
@@ -241,82 +279,42 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
     const selectCityAttractions = () => {
         if (selected !== "CITY ATTRACTIONS"){
             {isScreenMounted? setSelected("CITY ATTRACTIONS") : undefined}
-
+            if (isScreenMounted){
+                setPolylineCoords([])
+                setX(false)
+            }
         }
         return
     }
     const selectStores = () => {
         if (selected !== "STORES"){
             {isScreenMounted? setSelected("STORES") : undefined}
-
+            if (isScreenMounted){
+                setPolylineCoords([])
+                setX(false)
+            }
         }
         return
     }
 
 
 
-    let layoutProvider = new LayoutProvider(dataProv)
+    const [polylineCoords, setPolylineCoords] = useState([])
+    const [x, setX] = useState(false)
 
-    const distanceBetween = (lat, long) => {
-        let finalDis = computeDistanceBetween({lat: currentLoc.coords.latitude, lng: currentLoc.coords.longitude}, {lat, long})
-        return Math.round(finalDis)
-    }
+    const mergeLot = async(destLat, destLong) => {
+        if (currentLoc.coords.latitude != null && currentLoc.coords.longitude !=null)
+         {
+            const initLocation = `${currentLoc.coords.latitude},${currentLoc.coords.longitude}`
+            const destLoc = `${destLat},${destLong}`
 
- 
-
-
-
-    let rowRenderer = (type, data) => {
-
-
-        let {name, rating, vicinity, icon, geometry, photos} = data
-        let url
-        {photos !== undefined && photos[0].photo_reference !== undefined?
-            url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=150&maxheight=150&photoreference=${photos[0].photo_reference}&key=${CONF_API_KEY}`:
-            url = icon}
-        let helper;
-        if (rating){
-            helper =  parseFloat((5.0 - rating).toString().slice(0,5));
-        }
-        else{
-            helper =  0;
-            rating = 0;
-        }
-
-        switch(type){
-            case "ITEM_SPAN_2":
-                return(
-
-                    <TouchableHighlight style={styles.doubleSpanStyle} onPress={() => goToMap(geometry, name, vicinity,photos)}>
-                        <View style={{flex: 1}}>
-                            <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                            <Image
-                                    style={styles.imageStyle}
-                                    source={{uri: url}}
-                                />   
-                            </View>
-    
-                            <View style={{flex: 2}}>
-                                <Text style={styles.innerTextColor}>{name}</Text>
-                                <Text style={styles.rating}>{rating > 0? `Rating: (${rating}/5)`: 'No rating'}</Text>
-                                 <View style={{flexDirection: 'row'}}>
-                                     <View style={{flex: rating, backgroundColor: 'red', height: 10}}></View>
-                                     <View style={{flex: helper, height: 10}}></View>
-                                </View>
-                                <Text style={styles.address}>{`Address: ${vicinity}`}</Text>
-                                <Text style={styles.distance}>{`Distance: ${distanceBetween(geometry.location.lat, geometry.location.lng)} M`}</Text>
-
-                            </View>
-                        </View>
-                        
-                    </TouchableHighlight>
-                )
-            default:
-                return null;    
-        }
-    }
-
-
+            const [crds, xVal] = await getDirections(initLocation, destLoc)
+            console.log("Polyline ",crds)
+            setX(xVal)
+            setPolylineCoords(crds)
+         }
+         setMarkerLineLoading(false)
+       }
 
   return (
 
@@ -338,28 +336,68 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         </ScrollView>
             
             {locationErr.error ? 
+            
             <View style={{flex:7, alignItems: 'center', justifyContent: 'center'}}>
             <Text>We need your location for app. Give location permission and pull to refersh this app</Text> 
             </View>
             :
             <View style={{flex:7}}>
-                {initialLoading? 
-                    <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> :
-                initialError !== "" ? 
-                    <Text>{initialError}</Text> :
-                initialNoResults ? 
-                    <Text>No results</Text> :
+                {initialLoading?
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                        <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+                    </View>
+                    : initialError !== "" ?
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                        <Text>{initialError}</Text> 
+                    </View> :
+                    initialNoResults?
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                        <Text>No results</Text> 
+                    </View> :
+                
 
-                <RecyclerListView 
-                layoutProvider={layoutProvider}
-                dataProvider={dataProv}
-                rowRenderer={rowRenderer}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                  }
-            /> 
-                }
+                    <MapView
+                    style={styles.mapStyle} 
+                    initialRegion={{
+                      latitude: currentLoc.coords.latitude,
+                      longitude: currentLoc.coords.longitude,
+                      latitudeDelta: 0.0282,
+                      longitudeDelta: 0.0281,
+                    }} >
+                    <Marker
+                        coordinate={currentLoc.coords}
+                        title="You are here"
+                        description="nothinhg"
+                    />
 
+            {setX? 
+            <Polyline
+                coordinates={polylineCoords}
+                strokeWidth={2}
+                strokeColor="red"/>    
+            : 
+            // <Polyline
+            // coordinates={[
+            //     {latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude},
+            //     {latitude: destinationGeometry.location.lat, longitude: destinationGeometry.location.lng},
+            // ]}
+            // strokeWidth={2}
+            // strokeColor="red"/>     
+            undefined
+            }  
+
+                {markersList !== null?
+                markersList: undefined}
+            </MapView>
+
+            }
+            {markerLineLoading?
+                <View style={{position:'absolute', 
+                height:'100%',
+                width:width, 
+                flex: 1}}>
+                    <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
+                </View> :undefined}
 
             {loadingData ?
             <View style={styles.overlap}>
@@ -375,6 +413,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             </View>
             :<View />
             }
+
 
         </View> 
         }
@@ -488,7 +527,12 @@ const styles = StyleSheet.create({
       height:'100%',
       width:width, 
       flex: 1, 
-      backgroundColor: 'white'},
+      backgroundColor: 'white'
+        },
+      mapStyle: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+      }
   });
 
 

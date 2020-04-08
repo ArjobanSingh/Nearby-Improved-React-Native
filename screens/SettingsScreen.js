@@ -1,23 +1,27 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 
-import {logout} from '../redux/actions'
+// import {logout} from '../redux/actions'
 
-import * as firebase from 'firebase'
-import {connect} from 'react-redux';
+// import * as firebase from 'firebase'
+// import {connect} from 'react-redux';
 
 
-const SettingsScreen = ({logout}) => {
+const SettingsScreen = () => {
 
-  const logoutUser = () => {
-    firebase.auth().signOut()
-    logout()
+  // const logoutUser = () => {
+  //   firebase.auth().signOut()
+  //   logout()
+  // }
+
+  const dummyFunc = () => {
+    alert("Dummy ")
   }
 
   return (
     <View style={styles.container} >
         <Text style={{fontSize:30}}>Settings Screen</Text>
-        <Button title="Log-Out" onPress={logoutUser} />
+        <Button title="Dummy Button" onPress={dummyFunc} />
     </View>
   )
 } 
@@ -32,4 +36,4 @@ const styles = StyleSheet.create({
     },
   });
 
-  export default connect(null, {logout})(SettingsScreen);  
+  export default SettingsScreen // connect(null, {logout})(SettingsScreen);  

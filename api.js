@@ -1,6 +1,6 @@
 // const API_KEY = ``;
 import Polyline from '@mapbox/polyline';
-export const CONF_API_KEY = 'API'
+export const CONF_API_KEY = 'Api key'
 
 
 // export const searchPlaces = async(lat, long, radius, query) => {
@@ -34,7 +34,7 @@ export const searchGooglePlaces = async(lat, long, radius, query) => {
 
 
         let realResults = results.map((item) => {
-            return {name: item.name, type: "ITEM_SPAN_2", id: item.id, vicinity: item.vicinity, 
+            return {name: item.name, id: item.id, vicinity: item.vicinity, 
             rating: item.rating, icon: item.icon, geometry: item.geometry, photos: item.photos}
         })
         return realResults
