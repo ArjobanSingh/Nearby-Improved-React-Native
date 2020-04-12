@@ -1,6 +1,6 @@
 // const API_KEY = ``;
 import Polyline from '@mapbox/polyline';
-export const CONF_API_KEY = 'AIzaSyC3mhXTDOTf4G_O965Rro2DXh_kLRxj9vQ'
+export const CONF_API_KEY = 'api key'
 
 
 // export const searchPlaces = async(lat, long, radius, query) => {
