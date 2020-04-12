@@ -16,7 +16,12 @@ const { width } = Dimensions.get('window')
 let isScreenMounted;
 const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
-    
+    const [detailsVisibility, setDetailsVisibility] = useState(false)
+    const [picUrl, setPicUrl] = useState('')
+    const [name, setName] = useState('')
+    const [vicinity, setVicinity] = useState('')
+    const [distance, setDistance] = useState(null)
+
 
     const destination = (lats, longs) => {
         return {
@@ -28,16 +33,32 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             "speed": 0,
         }
     }
-    async function onPressMarker(event){
+    async function onPressMarker(event, url, name, vicinity){
+        setDistance(null)
+        setDetailsVisibility(false)
         setMarkerLineLoading(true)
         const markerInfo = event.nativeEvent;
+        setDistance(distanceBetween(markerInfo.coordinate.latitude, markerInfo.coordinate.longitude));
+        setDestinationLat(markerInfo.coordinate.latitude)
+        setDestinationLong(markerInfo.coordinate.longitude)
+
+        setPicUrl(url)
+        setName(name)
+        setVicinity(vicinity)
         await mergeLot(markerInfo.coordinate.latitude, markerInfo.coordinate.longitude)
     }
+
 
     function setMarkers(markerData){
         const pinColor = 'yellow';
         let markers = markerData.map((item) => {
             coordinateData = destination(item.geometry.location.lat, item.geometry.location.lng)
+            let {photos, icon} = item;
+            let url
+            {photos !== undefined && photos[0].photo_reference !== undefined?
+                url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=150&maxheight=150&photoreference=${photos[0].photo_reference}&key=${CONF_API_KEY}`:
+                url = icon
+            }
             return (
                 <Marker
                 key={item.id}
@@ -45,7 +66,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                 title={item.name}
                 description={item.vicinity}
                 pinColor={pinColor}
-                onPress={onPressMarker}
+                onPress={ (event) => onPressMarker(event, url, item.name, item.vicinity)}
             />
             )
         });
@@ -114,19 +135,18 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
     useEffect(() => {
         isScreenMounted = true
-        {console.log(locationErr.error)}
-        const unsubscribe = navigation.addListener('focus', () => {
-            console.log("NEARBY IS FOCUSED")
-          });
+        // const unsubscribe = navigation.addListener('focus', () => {
+        //     console.log("NEARBY IS FOCUSED")
+        //   });
         async function runAsyncFunc() { 
-            await search('hospital', 2000) 
+            await search('hospital', 3000) 
             return;
         }
 
         runAsyncFunc()        
         return (() => {
             isScreenMounted = false
-            unsubscribe()
+            // unsubscribe()
         });
     }, [])
 
@@ -151,11 +171,14 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
     const [initialLoading, setInitialLoading] = useState(true)
     const [initialError, setInitialError] = useState("")
     const [initialNoResults, setInitialNoResults] =useState(false)
-
+    const [destinationLat, setDestinationLat] = useState(null)
+    const [destinationLong, setDestinationLong] = useState(null)
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
-
+        setPolylineCoords([])
+        setX(false)
+        setDetailsVisibility(false)
         await getLocation()
         if (locationErr.error) {
             setRefreshing(false)
@@ -165,7 +188,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             {isScreenMounted ? isLoadingData(true) : ""}
                 if(isScreenMounted){
                 setSelected("HOSPITALS")
-                await search('hospital', 2000)
+                await search('hospital', 3000)
                 setPoliceData(null)
                 setCityAttractions(null)
                 setStoresData(null)
@@ -206,8 +229,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                     // fetch data from api
                     {isScreenMounted ? isLoadingData(true) : ""}
                     async function runAsyncFunc() { 
-                        console.log("Fetching again...")
-                        await search('police', 2000) 
+                        await search('police', 3000) 
                         return;
                     }
                     runAsyncFunc()
@@ -225,7 +247,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                     // fetch data from api
                     {isScreenMounted? isLoadingData(true): undefined}
                     async function runAsyncFunc() { 
-                        await search('tourist_attraction', 2000) 
+                        await search('tourist_attraction', 3000) 
                         return;
                     }
                     runAsyncFunc()
@@ -241,7 +263,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                 } else{
                     {isScreenMounted? isLoadingData(true): undefined}
                     async function runAsyncFunc() { 
-                        await search('store', 2000) 
+                        await search('store', 3000) 
                         return;
                     }
                     runAsyncFunc()
@@ -259,6 +281,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         if (selected !== "HOSPITALS"){
             {isScreenMounted? setSelected("HOSPITALS") : undefined}
             if (isScreenMounted){
+                setDetailsVisibility(false)
                 setPolylineCoords([])
                 setX(false)
             }
@@ -269,6 +292,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         if (selected !== "POLICE"){
             {isScreenMounted? setSelected("POLICE") : undefined}
             if (isScreenMounted){
+                setDetailsVisibility(false)
                 setPolylineCoords([])
                 setX(false)
             }
@@ -280,6 +304,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         if (selected !== "CITY ATTRACTIONS"){
             {isScreenMounted? setSelected("CITY ATTRACTIONS") : undefined}
             if (isScreenMounted){
+                setDetailsVisibility(false)
                 setPolylineCoords([])
                 setX(false)
             }
@@ -290,6 +315,7 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
         if (selected !== "STORES"){
             {isScreenMounted? setSelected("STORES") : undefined}
             if (isScreenMounted){
+                setDetailsVisibility(false)
                 setPolylineCoords([])
                 setX(false)
             }
@@ -309,18 +335,26 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             const destLoc = `${destLat},${destLong}`
 
             const [crds, xVal] = await getDirections(initLocation, destLoc)
-            console.log("Polyline ",crds)
             setX(xVal)
             setPolylineCoords(crds)
          }
          setMarkerLineLoading(false)
+         setDetailsVisibility(true)
        }
+
+    const distanceBetween = (lat, long) => {
+        let finalDis = computeDistanceBetween({lat: currentLoc.coords.latitude, lng: currentLoc.coords.longitude}, {lat, long})
+        return Math.round(finalDis)
+    }
 
   return (
 
     
-    <View style={styles.container} >
-        <ScrollView style={{flex: 1}} horizontal={true}>
+    <View style={styles.container}>
+        <ScrollView style={{flex: 1}} horizontal={true}
+        refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          } >
             <TouchableOpacity style={{flex: 1}} onPress={selectHospitals}>
             <Text style={[styles.options, selected === "HOSPITALS"? styles.selectedOption: styles.default] }>Hospitals</Text>
             </TouchableOpacity>
@@ -337,11 +371,11 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             
             {locationErr.error ? 
             
-            <View style={{flex:7, alignItems: 'center', justifyContent: 'center'}}>
-            <Text>We need your location for app. Give location permission and pull to refersh this app</Text> 
+            <View style={{flex:4.5, alignItems: 'center', justifyContent: 'center'}}>
+            <Text>{locationErr.errMsg}</Text> 
             </View>
             :
-            <View style={{flex:7}}>
+            <View style={{flex:4.5}}>
                 {initialLoading?
                     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
                         <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
@@ -356,7 +390,8 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                     </View> :
                 
 
-                    <MapView
+                <MapView
+                    provider={PROVIDER_GOOGLE}
                     style={styles.mapStyle} 
                     initialRegion={{
                       latitude: currentLoc.coords.latitude,
@@ -368,27 +403,29 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
                         coordinate={currentLoc.coords}
                         title="You are here"
                         description="nothinhg"
-                    />
+                />
 
             {setX? 
-            <Polyline
-                coordinates={polylineCoords}
+                <Polyline
+                    coordinates={polylineCoords}
+                    strokeWidth={2}
+                    strokeColor="red"/>    
+                : 
+                <Polyline
+                coordinates={[
+                    {latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude},
+                    {latitude: destinationLat, longitude: destinationLong},
+                ]}
                 strokeWidth={2}
-                strokeColor="red"/>    
-            : 
-            // <Polyline
-            // coordinates={[
-            //     {latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude},
-            //     {latitude: destinationGeometry.location.lat, longitude: destinationGeometry.location.lng},
-            // ]}
-            // strokeWidth={2}
-            // strokeColor="red"/>     
-            undefined
-            }  
+                strokeColor="red"/>     
+                // undefined
+                }  
 
-                {markersList !== null?
-                markersList: undefined}
+                    {markersList !== null?
+                    markersList: undefined}
+
             </MapView>
+
 
             }
             {markerLineLoading?
@@ -416,7 +453,23 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
 
 
         </View> 
+        
         }
+        {detailsVisibility?
+        <View style={{height: "30%", width: width, backgroundColor: 'rgba(52, 52, 52, 0.8)', flexDirection:'row'}}>
+            <View style={{height:170, width: 170, margin: 15}}>
+                <Image
+                    style={{width: null, height: null, flex:1}}
+                    source={{uri: picUrl}}
+                                />   
+                </View>
+                <View style={{flex:1}}>
+                    <Text style={{marginVertical: 15, fontSize: 17, color: 'white',fontWeight: 'bold'}}>{name}</Text>
+                    <Text style={{color: 'white'}}>{vicinity}</Text>
+                    <Text style={{color:'white', marginTop:10, fontWeight:'bold'}}>Distance: {distance} Meters</Text>
+                </View> 
+        </View>
+        : undefined}
 
     </View>
   )
@@ -432,7 +485,7 @@ const styles = StyleSheet.create({
       container: {
         flex: 1,
         backgroundColor: 'white',
-        justifyContent: 'center',
+        // justifyContent: 'center',
       },
       mapButton : {
           height: "5%",

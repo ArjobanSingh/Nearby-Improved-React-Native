@@ -1,10 +1,7 @@
-import signInWithGoogleAsync from '../google_signIn'
+
 import { searchPredictedPlaces} from '../api'
 
-const LOGIN = "LOGIN"
-const LOGOUT = "LOGOUT"
-const LOADING = "LOADING"
-const LOGIN_ERROR = "LOGIN_ERROR"
+
 const ADD_LOCATION = "ADD_LOCATION"
 const REMOVE_LOCATION = "REMOVE_LOCATION"
 
@@ -115,45 +112,8 @@ const removeLocation = () => {
     }
 }
 
-const handleLogin = () => {
-    return (async(dispatch) => {
-        dispatch(loading())
 
-        const result = await signInWithGoogleAsync();
-        if (result.token) dispatch(login(result.token));
-        else if (result.cancelled || result.error) dispatch(loginError(result.err_data))
-
-
-    })
-}
-
-const loading = () =>{
-    return {
-        type: LOADING
-    }
-}
-
-const login = (token) => {
-    return {
-        type : LOGIN,
-        payload : {token}
-    }
-}
-
-const logout = () => {
-    return {
-        type : LOGOUT
-    }
-}
-
-const loginError = (err) => {
-    return {
-        type: LOGIN_ERROR,
-        payload : {err}
-    }
-}
-
-export { LOGIN, LOGOUT, LOADING,LOGIN_ERROR, ADD_LOCATION, REMOVE_LOCATION ,LOCATION_ERROR, NO_LOCATION_ERROR,  
+export { ADD_LOCATION, REMOVE_LOCATION ,LOCATION_ERROR, NO_LOCATION_ERROR,  
     PREDICTED_ERROR, SET_PREDICTED_DATA, REMOVE_PREDICTED_DATA,
-    handleLogin,loading, logout, removeLocation,addLocation, locationError,
+     removeLocation,addLocation, locationError,
     noLocationError, setPredicteddata, predictedError, searchPrdicted, removePredictedData}

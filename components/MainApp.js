@@ -2,7 +2,6 @@ import React from 'react';
 
 import MainScreen from '../screens/MainScreen'
 import SettingsScreen from '../screens/SettingsScreen'
-import LoginScreen from '../screens/LoginScreen'
 import MapScreen from '../screens/MapScreen'
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,39 +10,23 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { connect } from 'react-redux';
 
-// import * as firebase from 'firebase';
 
-
-// import {firebaseConfig} from '../config';
-
-// firebase.initializeApp(firebaseConfig);
 
 
 const Tab = createBottomTabNavigator();
 const InternalStack = createStackNavigator();
-const MainStack = createStackNavigator();
 
 function MainApp(props) {
   return (
     <NavigationContainer>
-        {/* <MainStack.Navigator>
-            {!props.isLoggedIn ?
-            <MainStack.Screen name ="login" component={LoginScreen}  options={{ headerShown: false }}/>
-            :
-            <MainStack.Screen name ="MainTab" component={TabNavigator}  options={{ headerShown: false }}/>
-        }
-        </MainStack.Navigator> */}
         <TabNavigator />
     </NavigationContainer>
   );
 }
 
-const mapStateToProps = (state) =>{
-    // console.log(state)
-    return {isLoggedIn: state.isLoginReducer.isLoggedIn}
-}
 
-export default connect(mapStateToProps)(MainApp)
+
+export default MainApp;
 
 const TabNavigator = () => {
     return (
