@@ -18,10 +18,9 @@ const Tab = createMaterialTopTabNavigator();
 const {height} = Dimensions.get('window')
 
 let isMounted;
-const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, locationError, noLocationError, locationErr }) => {
+const HomeScreen = ({addLocation, removeLocation, userLocation, locationError, noLocationError, locationErr }) => {
     const [errorMessage, setErrorMessage] = useState(null) 
     const [appState, setAppState] = useState(AppState.currentState) 
-    const [pressStatus, setPressStatus] = useState(false)
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false);
 
@@ -34,11 +33,12 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
             ): undefined}
           } else {
 
-            // async function runAsync(){
-            //   await _getLocationAsync()
-            // } 
-            // runAsync()
-            _getLocationAsync()
+            
+            async function runAsync(){
+              await _getLocationAsync()
+            } 
+            runAsync()
+
           }
 
 
@@ -51,17 +51,17 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
 
     const onRefresh = React.useCallback(async () => {
       setRefreshing(true);
-      _getLocationAsync()
+      await _getLocationAsync()
 
     }, [refreshing]);
 
-    const handleAppStateChange = (nextAppState) => {
+    const handleAppStateChange = async(nextAppState) => {
         if (
             appState.match(/inactive|background/) &&
             nextAppState === 'active'
           ) {
             console.log('App has come to the foreground!');
-            _getLocationAsync();
+            await _getLocationAsync();
           }
           // {isMounted ? setAppState(nextAppState) : undefined};
           setAppState(nextAppState);
@@ -74,9 +74,6 @@ const HomeScreen = ({addLocation, removeLocation, userLocation, navigation, loca
           locationError('Permission to access location was denied')
           setLoading(false)
           setRefreshing(false)
-          // setErrorMessage(
-          //   'Permission to access location was denied',
-          // )
           return
         }
         

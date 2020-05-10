@@ -12,6 +12,7 @@ const { width } = Dimensions.get('window')
 let isScreenMounted;
 const SearchScreen = ({ data, searchPrdicted, userLocation,getLocation, navigation, locationErr, removePredictedData}) => {
 
+const [buttonDisabled, setButtonDisabled] = useState(true);
 const [query, setquery] = useState("")
 const [dataAvailable, setDataAvailable] = useState(false)
 const [loadingLocationData, setLoadingLocationData] = useState(false)
@@ -32,7 +33,7 @@ useEffect(() => {
     isScreenMounted = false;
     unsubscribe()
   })
-})
+}, [])
 
 const onRefresh = useCallback(async () => {
   setRefreshing(true);
@@ -44,9 +45,9 @@ const onRefresh = useCallback(async () => {
   else{
       // fetch data from api
           if(isScreenMounted){
-          if (query.length > 0) {
-            console.log(query)
-            await searchData()}
+          if (/\S/.test(query)) {
+            await searchData()
+          }
           else removePredictedData()
           setRefreshing(false)
           }
@@ -56,6 +57,15 @@ const onRefresh = useCallback(async () => {
 
 }, [refreshing]);
 
+useEffect(() => {
+
+  if (/\S/.test(query)) {
+    // string is not empty and not just whitespace
+
+    setButtonDisabled(false);
+  } else setButtonDisabled(true)  
+  console.log(query)
+}, [query,])
 
 const goToMap = (geometry, name, vicinity,photos) => {
   navigation.navigate('Map', {
@@ -111,9 +121,11 @@ const searchData = async() =>{
     <View style={styles.container} >
         <View style={{flexDirection:'row'}}>
         <TextInput style={styles.textInput} value={query} onChangeText={changeQuery} autoFocus={true} placeholder="Search Place"/>
-        <TouchableHighlight style={styles.btn} onPress={searchData}>
+        {!buttonDisabled ?
+        <TouchableHighlight style={styles.btn} onPress={searchData} disabled={buttonDisabled}>
             <Text style={{fontWeight: "bold",}}>Search</Text>
         </TouchableHighlight>
+        : undefined}
         </View>
 
         {initialLoading? 

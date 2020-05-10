@@ -371,11 +371,13 @@ const NearbyScreen = ({currentLoc, navigation, getLocation, locationErr}) => {
             
             {locationErr.error ? 
             
-            <View style={{flex:4.5, alignItems: 'center', justifyContent: 'center'}}>
+            <View style={detailsVisibility? {flex:4.5, alignItems: 'center', justifyContent: 'center'}
+                :{flex:7, alignItems: 'center', justifyContent: 'center'}}>
             <Text>{locationErr.errMsg}</Text> 
             </View>
             :
-            <View style={{flex:4.5}}>
+            <View style={detailsVisibility?{flex:4.5}: 
+                {flex:7}}>
                 {initialLoading?
                     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
                         <ActivityIndicator style={{flex: 1}} size="large" color="#0000ff" /> 
