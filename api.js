@@ -1,6 +1,7 @@
 // const API_KEY = ``;
 import Polyline from '@mapbox/polyline';
-export const CONF_API_KEY = 'AIzaSyC3mhXTDOTf4G_O965Rro2DXh_kLRxj9vQ'
+export const CONF_API_KEY = 'YOUR_API_KEY'
+
 
 
 // export const searchPlaces = async(lat, long, radius, query) => {
@@ -18,6 +19,7 @@ export const CONF_API_KEY = 'AIzaSyC3mhXTDOTf4G_O965Rro2DXh_kLRxj9vQ'
 export const searchGooglePlaces = async(lat, long, radius, query) => {
         try{
             const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${long}&radius=${radius}&type=${query}&key=${CONF_API_KEY}`
+            console.log(url)
             const response = await fetch(url)
             const json = await response.json()
             return makeGoodData(json.results)
